@@ -1,0 +1,439 @@
+/* Register & Login Page Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #D4E7D7; /* Lighter shade of green background */
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.register-container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.register-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    display: grid;
+    grid-template-columns: 60% 40%;
+    overflow: hidden;
+    min-height: 600px;
+}
+
+/* Left Panel - Form */
+.register-form-panel {
+    background: #ffffff;
+    padding: 3rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.form-content {
+    max-width: 100%;
+}
+
+.logo-section {
+    margin-bottom: 2rem;
+}
+
+.brand-logo {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #2C3E35;
+    font-family: Georgia, serif;
+    letter-spacing: 0.5px;
+}
+
+.form-header {
+    margin-bottom: 1.5rem;
+}
+
+.form-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2C3E35;
+    margin-bottom: 0.5rem;
+    font-family: Georgia, serif;
+    line-height: 1.2;
+}
+
+.form-subtitle {
+    font-size: 1rem;
+    color: #6B7E75;
+    font-weight: 400;
+}
+
+.login-link-top {
+    margin-bottom: 2rem;
+    text-align: right;
+}
+
+.login-link-top p {
+    font-size: 0.875rem;
+    color: #6B7E75;
+}
+
+.login-link-top a {
+    color: #7FB685;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.login-link-top a:hover {
+    color: #6B9E71;
+    text-decoration: underline;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    position: relative;
+}
+
+.register-form input[type="text"],
+.register-form input[type="email"],
+.register-form input[type="password"],
+.register-form input[type="tel"] {
+    width: 100%;
+    padding: 0.75rem 0;
+    border: none;
+    border-bottom: 1px solid #E0E0E0;
+    background: transparent;
+    font-size: 1rem;
+    color: #2C3E35;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.register-form input::placeholder {
+    color: #9E9E9E;
+    font-weight: 400;
+}
+
+.register-form input:focus {
+    border-bottom-color: #7FB685;
+}
+
+/* Phone Number Input Styling */
+.intl-tel-input {
+    width: 100%;
+}
+
+.intl-tel-input .selected-flag {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.intl-tel-input input {
+    padding-left: 60px !important;
+    border: none;
+    border-bottom: 1px solid #E0E0E0;
+    background: transparent;
+}
+
+.intl-tel-input input:focus {
+    border-bottom-color: #7FB685;
+}
+
+.intl-tel-input .flag-container {
+    padding: 0.75rem 0;
+}
+
+.btn-signup {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: #7FB685;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.btn-signup:hover {
+    background: #6B9E71;
+}
+
+.legal-text {
+    font-size: 0.75rem;
+    color: #9E9E9E;
+    text-align: center;
+    margin-top: 1rem;
+    line-height: 1.5;
+}
+
+.legal-text a {
+    color: #7FB685;
+    text-decoration: none;
+}
+
+.legal-text a:hover {
+    text-decoration: underline;
+}
+
+/* Login Page Specific Styles */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -0.5rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6B7E75;
+    cursor: pointer;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #7FB685;
+}
+
+.forgot-password {
+    font-size: 0.875rem;
+    color: #7FB685;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+    color: #6B9E71;
+    text-decoration: underline;
+}
+
+/* Right Panel - Image */
+.register-image-panel {
+    background: #F5F1EB;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.register-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .register-card {
+        grid-template-columns: 55% 45%;
+    }
+    
+    .register-form-panel {
+        padding: 2.5rem 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .register-card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+    
+    .register-image-panel {
+        display: none;
+    }
+    
+    .register-form-panel {
+        padding: 2rem;
+    }
+    
+    .form-title {
+        font-size: 2rem;
+    }
+    
+    .form-subtitle {
+        font-size: 0.9375rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-form-panel {
+        padding: 1.5rem;
+    }
+    
+    .form-title {
+        font-size: 1.75rem;
+    }
+    
+    .brand-logo {
+        font-size: 1.25rem;
+    }
+}
+
+/* Animation Styles */
+.blur-words {
+    overflow: hidden;
+}
+
+.blur-words .word {
+    display: inline-block;
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.blur-words .word.in {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Password Requirements */
+.password-requirements {
+    display: none;
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: #F5F1EB;
+    border-radius: 6px;
+    border: 1px solid #E8DCC4;
+}
+
+.requirements-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #6B7E75;
+    transition: all 0.3s ease;
+}
+
+.requirement-item:last-child {
+    margin-bottom: 0;
+}
+
+.requirement-item i {
+    font-size: 0.75rem;
+    width: 16px;
+    text-align: center;
+}
+
+.requirement-item.unmet i {
+    color: #d4183d;
+}
+
+.requirement-item.met {
+    color: #7FB685;
+}
+
+.requirement-item.met i {
+    color: #7FB685;
+}
+
+.password-strength {
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.password-strength.weak {
+    background: rgba(212, 24, 61, 0.1);
+    color: #d4183d;
+}
+
+.password-strength.medium {
+    background: rgba(232, 220, 196, 0.5);
+    color: #8B7355;
+}
+
+.password-strength.strong {
+    background: rgba(127, 182, 133, 0.1);
+    color: #7FB685;
+}
+
+/* Field Feedback */
+.field-feedback {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0;
+}
+
+.field-feedback.success {
+    color: #7FB685;
+}
+
+.field-feedback.error {
+    color: #d4183d;
+}
+
+/* Button Loading State */
+.btn-signup {
+    position: relative;
+}
+
+.btn-signup:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-loader {
+    display: none;
+}
+
+.btn-loader i {
+    margin-right: 0.5rem;
+}
+
