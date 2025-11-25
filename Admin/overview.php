@@ -140,22 +140,22 @@ $recentActivity = $adminModel->getRecentActivity(4);
             </div>
             <div class="widget-content">
                 <?php if (empty($recentActivity)): ?>
-                    <div class="activity-item">
-                        <div class="activity-info">
+                <div class="activity-item">
+                    <div class="activity-info">
                             <p class="activity-title">No recent activity</p>
-                        </div>
+                </div>
                     </div>
                 <?php else: ?>
                     <?php foreach ($recentActivity as $activity): ?>
-                        <div class="activity-item">
-                            <div class="activity-icon">
+                <div class="activity-item">
+                    <div class="activity-icon">
                                 <i class="fas fa-<?php echo htmlspecialchars($activity['icon']); ?>"></i>
-                            </div>
-                            <div class="activity-info">
+                    </div>
+                    <div class="activity-info">
                                 <p class="activity-title"><?php echo htmlspecialchars($activity['title']); ?></p>
                                 <p class="activity-time"><?php echo htmlspecialchars($activity['time']); ?></p>
-                            </div>
-                        </div>
+                    </div>
+                </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>

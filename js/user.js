@@ -96,7 +96,7 @@ async function deleteUser(customerId, userName) {
         text: 'Users cannot be deleted from this interface. Please contact the system administrator for user management.',
         confirmButtonColor: '#7FB685',
         confirmButtonText: 'OK'
-    });
+        });
 }
 
 /**

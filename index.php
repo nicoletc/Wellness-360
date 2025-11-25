@@ -58,6 +58,26 @@ require_once 'Functions/get_cart_count.php';
         </div>
     </header>
 
+    <?php if (is_logged_in()): ?>
+        <!-- Daily Reminder Banner -->
+        <div id="daily-reminder-banner" class="daily-reminder-banner" style="display: none;">
+            <div class="container">
+                <div class="reminder-content">
+                    <button class="reminder-close" onclick="closeDailyReminder()" aria-label="Close reminder">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="reminder-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="reminder-text">
+                        <h3 class="reminder-title" id="reminder-title">Daily Wellness Reminder</h3>
+                        <p class="reminder-message" id="reminder-message">Loading your personalized reminder...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <?php
     // Include image paths and features from home_data.php first
     $heroImage = 'uploads/index.png';
@@ -307,7 +327,7 @@ require_once 'Functions/get_cart_count.php';
                     <h2 class="section-title">Upcoming Events</h2>
                     <p class="section-subtitle">Join workshops, challenges, and community gatherings</p>
                 </div>
-                <a href="View/community.php" class="btn btn-outline">
+                <a href="View/community.php?tab=workshops" class="btn btn-outline">
                     View All Events
                     <i class="fas fa-arrow-right"></i>
                 </a>
@@ -334,7 +354,7 @@ require_once 'Functions/get_cart_count.php';
                                     <span><?php echo $event['attendees']; ?> attending</span>
                                 </div>
                             </div>
-                            <a href="View/community.php" class="btn btn-outline btn-full">Register Now</a>
+                            <a href="View/community.php?tab=workshops" class="btn btn-outline btn-full">Register Now</a>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -351,7 +371,7 @@ require_once 'Functions/get_cart_count.php';
                 <p>
                     Join thousands of Ghanaians transforming their health with trusted resources, quality products, and a supportive community.
                 </p>
-                <a href="View/profile.php" class="btn btn-secondary btn-lg">
+                <a href="View/register.php" class="btn btn-secondary btn-lg">
                     Create Your Profile
                     <i class="fas fa-arrow-right"></i>
                 </a>
@@ -409,6 +429,73 @@ require_once 'Functions/get_cart_count.php';
     <script src="js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/cart.js"></script>
+    
+    <?php if (is_logged_in()): ?>
+    <script>
+    // Daily Reminder System
+    async function loadDailyReminder() {
+        try {
+            const response = await fetch('Actions/get_daily_reminder_action.php');
+            const result = await response.json();
+            
+            if (result.status && result.reminder) {
+                const reminder = result.reminder;
+                const banner = document.getElementById('daily-reminder-banner');
+                const titleEl = document.getElementById('reminder-title');
+                const messageEl = document.getElementById('reminder-message');
+                
+                if (banner && titleEl && messageEl) {
+                    titleEl.textContent = reminder.title || 'Daily Wellness Reminder';
+                    messageEl.textContent = reminder.message || 'Stay motivated on your wellness journey!';
+                    
+                    // Show banner with animation
+                    banner.style.display = 'block';
+                    setTimeout(() => {
+                        banner.classList.add('show');
+                    }, 100);
+                    
+                    // Mark as read when displayed
+                    if (reminder.id && !reminder.is_read) {
+                        markReminderAsRead(reminder.id);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading daily reminder:', error);
+        }
+    }
+    
+    function closeDailyReminder() {
+        const banner = document.getElementById('daily-reminder-banner');
+        if (banner) {
+            banner.classList.remove('show');
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 300);
+        }
+    }
+    
+    async function markReminderAsRead(reminderId) {
+        try {
+            await fetch('Actions/mark_reminder_read_action.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ reminder_id: reminderId })
+            });
+        } catch (error) {
+            console.error('Error marking reminder as read:', error);
+        }
+    }
+    
+    // Load reminder when page loads (only for logged-in users)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Delay slightly to let page render first
+        setTimeout(loadDailyReminder, 500);
+    });
+    </script>
+    <?php endif; ?>
 </body>
 </html>
 

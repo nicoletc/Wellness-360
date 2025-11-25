@@ -407,6 +407,7 @@ $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
     </footer>
 
     <script src="../js/main.js"></script>
+    <script src="../js/activity_tracker.js"></script>
     <script src="../js/cart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/wishlist.js"></script>

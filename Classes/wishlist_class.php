@@ -129,30 +129,7 @@ class wishlist_class extends db_connection
         error_log("=== WISHLIST REMOVE ===");
         error_log("customer_id: $customer_id, product_id: $product_id");
         
-        // Check if product exists first
-        $check_sql = "SELECT like_id FROM product_likes WHERE customer_id = $customer_id AND product_id = $product_id LIMIT 1";
-        $existing = $this->db_fetch_one($check_sql);
-        
-        error_log("Wishlist check before delete - existing: " . var_export($existing, true));
-        
-        // Verify product exists
-        $product_exists = false;
-        if ($existing !== false && $existing !== null && is_array($existing)) {
-            if (isset($existing['like_id']) && !empty($existing['like_id'])) {
-                $product_exists = true;
-                error_log("Wishlist: Product exists with like_id: " . $existing['like_id']);
-            }
-        }
-        
-        if (!$product_exists) {
-            error_log("Wishlist: Product not found in wishlist");
-            return [
-                'status' => false,
-                'message' => 'Product is not in your wishlist.'
-            ];
-        }
-        
-        // Product exists, delete it using db_write_query to maintain connection
+        // Try to delete directly - check affected rows to determine if it existed
         $sql = "DELETE FROM product_likes WHERE customer_id = $customer_id AND product_id = $product_id";
         $delete_result = $this->db_write_query($sql);
         
@@ -173,35 +150,20 @@ class wishlist_class extends db_connection
             ];
         }
         
-        // Query succeeded - verify deletion by checking if record still exists
-        $verify_sql = "SELECT like_id FROM product_likes WHERE customer_id = $customer_id AND product_id = $product_id LIMIT 1";
-        $verify_result = $this->db_fetch_one($verify_sql);
-        
-        error_log("Wishlist verify after delete - result: " . var_export($verify_result, true));
-        
-        // If verify_result is null or false, the record was deleted
-        $was_deleted = false;
-        if ($verify_result === null || $verify_result === false) {
-            $was_deleted = true;
-        } elseif (is_array($verify_result)) {
-            // If array but no like_id, also consider it deleted
-            if (!isset($verify_result['like_id']) || empty($verify_result['like_id'])) {
-                $was_deleted = true;
-            }
-        }
-        
-        if ($was_deleted) {
-            error_log("Wishlist: Successfully removed - record no longer exists");
+        // Check affected rows to see if a record was actually deleted
+        if ($affected_rows > 0) {
+            // Successfully deleted
+            error_log("Wishlist: Successfully removed - affected_rows: $affected_rows");
             return [
                 'status' => true,
                 'message' => 'Product removed from wishlist successfully.'
             ];
         } else {
-            // Record still exists - delete didn't work
-            error_log("Wishlist: Delete reported success but record still exists");
+            // No rows affected - product was not in wishlist
+            error_log("Wishlist: No rows affected - product not in wishlist");
             return [
                 'status' => false,
-                'message' => 'Failed to remove from wishlist. Please try again.'
+                'message' => 'Product is not in your wishlist.'
             ];
         }
     }

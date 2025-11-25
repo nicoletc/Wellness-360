@@ -236,6 +236,7 @@ $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
     </footer>
 
     <script src="../js/main.js"></script>
+    <script src="../js/activity_tracker.js"></script>
     <script>
     // Auto-submit search form on Enter key
     document.addEventListener('DOMContentLoaded', function() {

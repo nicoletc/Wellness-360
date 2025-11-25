@@ -85,6 +85,12 @@
 - order_id (FK to orders)
 - currency
 - payment_date
+- payment_method (ENUM: 'paystack', 'bank_transfer', 'mobile_money', NULL) - Payment method selected by user
+- transaction_ref (VARCHAR(100), NULL) - Transaction reference (e.g., Paystack ref: W360-5-1699876543)
+- authorization_code (VARCHAR(100), NULL) - Authorization code from payment gateway (for Paystack)
+- payment_channel (ENUM: 'card', 'mobile_money', 'bank', NULL) - Payment channel selected by user
+CREATE INDEX idx_transaction_ref ON payment(transaction_ref);
+
 
 ### 12. community
 - comm_id: int(11), NOT NULL, AUTO_INCREMENT, PRIMARY KEY

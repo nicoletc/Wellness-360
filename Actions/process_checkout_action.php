@@ -19,6 +19,39 @@ if (!is_logged_in()) {
     ], 401);
 }
 
+// Get payment method and channel from request
+$input = json_decode(file_get_contents('php://input'), true);
+$payment_method = isset($input['payment_method']) ? trim($input['payment_method']) : 'other';
+$payment_channel = isset($input['payment_channel']) ? trim($input['payment_channel']) : 'other';
+
+// Validate payment method (must be one of the allowed values)
+$allowed_methods = ['paystack', 'bank_transfer', 'mobile_money'];
+if (!in_array($payment_method, $allowed_methods)) {
+    json_response([
+        'status' => 'error',
+        'message' => 'Invalid payment method selected.'
+    ], 400);
+}
+
+// Validate payment channel (must be one of the allowed values)
+$allowed_channels = ['card', 'mobile_money', 'bank'];
+if (!in_array($payment_channel, $allowed_channels)) {
+    // Auto-set channel based on payment method if not provided
+    if ($payment_method === 'mobile_money') {
+        $payment_channel = 'mobile_money';
+    } elseif ($payment_method === 'bank_transfer') {
+        $payment_channel = 'bank';
+    } elseif ($payment_method === 'paystack') {
+        // For Paystack, default to card if not specified
+        $payment_channel = 'card';
+    } else {
+        json_response([
+            'status' => 'error',
+            'message' => 'Invalid payment channel selected.'
+        ], 400);
+    }
+}
+
 $customer_id = current_user_id();
 
 if (!$customer_id) {
@@ -100,12 +133,14 @@ try {
         ], 400);
     }
     
-    // Record payment
+    // Record payment with payment method and channel
     $payment_result = $order_controller->record_payment_ctr([
         'customer_id' => $customer_id,
         'order_id' => $order_id,
         'amt' => $total,
-        'currency' => 'GHS'
+        'currency' => 'GHS',
+        'payment_method' => $payment_method,
+        'payment_channel' => $payment_channel
     ]);
     
     if (!$payment_result['status']) {

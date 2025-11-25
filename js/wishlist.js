@@ -223,30 +223,7 @@ async function removeFromWishlist(productId) {
     }
     
     try {
-        // First, verify the product is actually in the wishlist on the server
-        const checkResponse = await fetch(`../Actions/check_wishlist_action.php?product_id=${productId}`);
-        const checkResult = await checkResponse.json();
-        
-        if (checkResult.status === 'success' && !checkResult.in_wishlist) {
-            // Product is not in wishlist - update button state and show info message
-            updateWishlistButton(productId, false);
-            
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Not in Wishlist',
-                    text: 'This product is not in your wishlist.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } else {
-                alert('This product is not in your wishlist.');
-            }
-            
-            return false;
-        }
-        
-        // Product is in wishlist, proceed with removal
+        // Directly attempt to remove - let the server handle validation
         const formData = new FormData();
         formData.append('product_id', productId);
         
@@ -261,7 +238,7 @@ async function removeFromWishlist(productId) {
         console.log('Remove from wishlist response:', result);
         
         if (result.status === 'success') {
-            // Update button state
+            // Update button state to reflect removal
             updateWishlistButton(productId, false);
             
             // Show success message
@@ -279,19 +256,30 @@ async function removeFromWishlist(productId) {
             
             return true;
         } else {
-            // If error says "not in wishlist", update button state to match
-            if (result.message && result.message.toLowerCase().includes('not in')) {
+            // If error says "not in wishlist", update button state to match reality
+            if (result.message && (result.message.toLowerCase().includes('not in') || result.message.toLowerCase().includes('not in your wishlist'))) {
                 updateWishlistButton(productId, false);
-            }
-            
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: result.message && result.message.toLowerCase().includes('not in') ? 'info' : 'error',
-                    title: result.message && result.message.toLowerCase().includes('not in') ? 'Not in Wishlist' : 'Error',
-                    text: result.message || 'Failed to remove product from wishlist.'
-                });
+                // Show a less alarming message since the state is now corrected
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Already Removed',
+                        text: 'This product is not in your wishlist.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
             } else {
-                alert(result.message || 'Failed to remove product from wishlist.');
+                // Other errors
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message || 'Failed to remove product from wishlist.'
+                    });
+                } else {
+                    alert(result.message || 'Failed to remove product from wishlist.');
+                }
             }
             
             return false;
@@ -320,15 +308,23 @@ function updateWishlistButton(productId, isInWishlist) {
     
     buttons.forEach(btn => {
         const icon = btn.querySelector('i');
+        const textSpan = btn.querySelector('.wishlist-text');
+        
         if (icon) {
             if (isInWishlist) {
                 icon.classList.remove('far');
                 icon.classList.add('fas');
                 btn.classList.add('in-wishlist');
+                if (textSpan) {
+                    textSpan.textContent = 'Remove from Wishlist';
+                }
             } else {
                 icon.classList.remove('fas');
                 icon.classList.add('far');
                 btn.classList.remove('in-wishlist');
+                if (textSpan) {
+                    textSpan.textContent = 'Add to Wishlist';
+                }
             }
         }
     });
@@ -359,8 +355,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle wishlist buttons with .wishlist-btn class (single_product.php)
     document.querySelectorAll('.wishlist-btn').forEach(btn => {
         const productId = btn.getAttribute('data-product-id');
-        if (productId && !btn.classList.contains('product-wishlist-btn')) {
-            // Only add listener if not already handled above
+        if (productId) {
+            // Check if this button already has a listener (avoid duplicates)
+            if (btn.hasAttribute('data-wishlist-listener')) {
+                return; // Already has listener
+            }
+            btn.setAttribute('data-wishlist-listener', 'true');
+            
             const productIdNum = parseInt(productId);
             if (productIdNum && productIdNum > 0) {
                 btn.addEventListener('click', function(e) {
@@ -382,11 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const response = await fetch(`../Actions/check_wishlist_action.php?product_id=${productId}`);
                 const result = await response.json();
-                if (result.status === 'success' && result.in_wishlist) {
-                    updateWishlistButton(productId, true);
+                if (result.status === 'success') {
+                    updateWishlistButton(parseInt(productId), result.in_wishlist || false);
                 }
             } catch (error) {
                 console.error('Error checking wishlist status:', error);
+                // On error, default to not in wishlist
+                updateWishlistButton(parseInt(productId), false);
             }
         }
     });

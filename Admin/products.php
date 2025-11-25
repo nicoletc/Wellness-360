@@ -19,42 +19,6 @@ require_admin();
     <link rel="stylesheet" href="../Css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        .product-thumbnail {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        .product-image-placeholder {
-            width: 50px;
-            height: 50px;
-            background: #E8DCC4;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            color: #6B7E75;
-            margin-right: 10px;
-        }
-        .product-cell {
-            display: flex;
-            align-items: center;
-        }
-        .image-preview {
-            max-width: 200px;
-            max-height: 200px;
-            margin-top: 10px;
-            border-radius: 4px;
-            display: none;
-        }
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-    </style>
 </head>
 <body>
     <div class="admin-wrapper">
@@ -114,15 +78,27 @@ require_admin();
                         <h1 class="admin-title">Products Management</h1>
                         <p class="admin-subtitle">Manage all products in the shop</p>
                     </div>
-                    <div class="admin-actions" style="flex-direction: column; align-items: flex-end; gap: 0.75rem;">
-                        <button class="btn-admin-primary" onclick="openAddModal()" style="min-width: 200px;">
-                            <i class="fas fa-plus"></i>
-                            Add New Product
-                        </button>
-                        <a href="../View/shop.php" class="btn-admin-primary" target="_blank" style="min-width: 200px;">
-                            <i class="fas fa-store"></i>
-                            View Storefront
-                        </a>
+                    <div class="admin-actions">
+                        <div class="admin-actions-group">
+                            <button class="btn-admin-primary" onclick="downloadBulkTemplate()">
+                                <i class="fas fa-download"></i>
+                                Download Bulk Template
+                            </button>
+                            <button class="btn-admin-primary" onclick="openBulkUploadModal()">
+                                <i class="fas fa-upload"></i>
+                                Bulk Upload Products
+                            </button>
+                        </div>
+                        <div class="admin-actions-group">
+                            <button class="btn-admin-primary" onclick="openAddModal()">
+                                <i class="fas fa-plus"></i>
+                                Add New Product
+                            </button>
+                            <a href="../View/shop.php" class="btn-admin-primary" target="_blank">
+                                <i class="fas fa-store"></i>
+                                View Storefront
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -152,7 +128,7 @@ require_admin();
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="6" style="text-align: center;">Loading products...</td>
+                                <td colspan="6" class="loading-text">Loading products...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -163,7 +139,7 @@ require_admin();
 
     <!-- Add Product Modal -->
     <div class="modal" id="addProductModal" style="display: none;">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content modal-large">
             <div class="modal-header">
                 <h2>Add New Product</h2>
                 <span class="close" onclick="closeAddModal()">&times;</span>
@@ -228,7 +204,7 @@ require_admin();
 
     <!-- Update Product Modal -->
     <div class="modal" id="updateProductModal" style="display: none;">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content modal-large">
             <div class="modal-header">
                 <h2>Update Product</h2>
                 <span class="close" onclick="closeUpdateModal()">&times;</span>
@@ -293,9 +269,47 @@ require_admin();
         </div>
     </div>
 
+    <!-- Bulk Upload Modal -->
+    <div class="modal" id="bulkUploadModal" style="display: none;">
+        <div class="modal-content modal-medium">
+            <div class="modal-header">
+                <h2>Bulk Upload Products</h2>
+                <span class="close" onclick="closeBulkUploadModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-upload-instructions">
+                    <h3>Instructions:</h3>
+                    <ol>
+                        <li>Download the bulk upload template using the "Download Bulk Template" button</li>
+                        <li>Fill in the CSV with your product data</li>
+                        <li>Add product images to the same folder as the CSV</li>
+                        <li>Zip the CSV and images together</li>
+                        <li>Upload the ZIP file here</li>
+                    </ol>
+                </div>
+                <form id="bulkUploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="zip_file">ZIP File <span class="required">*</span></label>
+                        <input type="file" id="zip_file" name="zip_file" accept=".zip" required>
+                        <small class="form-help">Upload a ZIP file containing the CSV and product images (max 50MB).</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeBulkUploadModal()">Cancel</button>
+                        <button type="submit" class="btn-admin-primary">
+                            <span class="btn-text">Upload & Process</span>
+                            <span class="btn-loader" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i> Processing...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- View Product Modal -->
     <div class="modal" id="viewProductModal" style="display: none;">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content modal-medium">
             <div class="modal-header">
                 <h2>Product Details</h2>
                 <span class="close" onclick="closeViewModal()">&times;</span>
@@ -332,12 +346,12 @@ require_admin();
                     </div>
                     <div class="info-row">
                         <span class="info-label">Description:</span>
-                        <span class="info-value" id="view_product_desc" style="text-align: left; white-space: pre-wrap;">-</span>
+                        <span class="info-value view-product-desc" id="view_product_desc">-</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Product Image:</span>
                         <span class="info-value">
-                            <img id="view_product_image" class="image-preview" alt="Product image" style="max-width: 300px;">
+                            <img id="view_product_image" class="image-preview view-product-image" alt="Product image">
                         </span>
                     </div>
                 </div>
@@ -359,6 +373,94 @@ require_admin();
             if (preview) preview.style.display = 'none';
         }
 
+        function openBulkUploadModal() {
+            document.getElementById('bulkUploadModal').style.display = 'block';
+            document.getElementById('bulkUploadForm').reset();
+        }
+
+        function closeBulkUploadModal() {
+            document.getElementById('bulkUploadModal').style.display = 'none';
+        }
+
+        async function downloadBulkTemplate() {
+            // Show loading
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Downloading...',
+                    text: 'Preparing bulk upload template...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+
+            try {
+                // Fetch the file
+                const response = await fetch('../Actions/download_bulk_template.php');
+                
+                if (!response.ok) {
+                    // Try to get error message from response
+                    const errorText = await response.text();
+                    throw new Error('Download failed: ' + response.status + ' ' + response.statusText + (errorText ? ' - ' + errorText : ''));
+                }
+
+                // Get the blob
+                const blob = await response.blob();
+                
+                // Check if we got a valid ZIP file (ZIP files start with PK)
+                if (blob.size === 0) {
+                    throw new Error('Downloaded file is empty');
+                }
+                
+                // Check if response is actually a ZIP (ZIP files start with "PK" - 50 4B in hex)
+                const arrayBuffer = await blob.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                if (uint8Array.length < 2 || uint8Array[0] !== 0x50 || uint8Array[1] !== 0x4B) {
+                    // Not a valid ZIP, might be an error message
+                    const text = await blob.text();
+                    throw new Error('Server returned an error: ' + text);
+                }
+
+                // Create a download link
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'bulk_template.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                // Close loading and show success
+                if (typeof Swal !== 'undefined') {
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Template Downloaded',
+                        text: 'The bulk upload template has been downloaded. Fill it in and zip it with your images.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                
+                // Close loading and show error
+                if (typeof Swal !== 'undefined') {
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Download Failed',
+                        text: 'Failed to download the template. Please try again or contact support if the problem persists.',
+                        confirmButtonColor: '#7FB685'
+                    });
+                }
+            }
+        }
+
         // Close modal when clicking outside (only on the modal backdrop, not inside modal-content)
         window.addEventListener('click', function(event) {
             const addModal = document.getElementById('addProductModal');
@@ -375,11 +477,15 @@ require_admin();
             if (event.target == viewModal) {
                 viewModal.style.display = 'none';
             }
+            const bulkUploadModal = document.getElementById('bulkUploadModal');
+            if (event.target == bulkUploadModal) {
+                bulkUploadModal.style.display = 'none';
+            }
         });
 
         // Prevent modal from closing when clicking inside modal-content
         document.addEventListener('DOMContentLoaded', function() {
-            const modals = ['addProductModal', 'updateProductModal', 'viewProductModal'];
+            const modals = ['addProductModal', 'updateProductModal', 'viewProductModal', 'bulkUploadModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (modal) {
@@ -391,6 +497,128 @@ require_admin();
                     }
                 }
             });
+
+            // Handle bulk upload form submission
+            const bulkUploadForm = document.getElementById('bulkUploadForm');
+            if (bulkUploadForm) {
+                bulkUploadForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData();
+                    const zipFile = document.getElementById('zip_file').files[0];
+                    
+                    if (!zipFile) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'No File Selected',
+                                text: 'Please select a ZIP file to upload.'
+                            });
+                        }
+                        return;
+                    }
+
+                    // Check file size (50MB limit)
+                    if (zipFile.size > 50 * 1024 * 1024) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'File Too Large',
+                                text: 'The ZIP file must be less than 50MB.'
+                            });
+                        }
+                        return;
+                    }
+
+                    formData.append('zip_file', zipFile);
+
+                    // Show loading
+                    const submitBtn = bulkUploadForm.querySelector('button[type="submit"]');
+                    const btnText = submitBtn.querySelector('.btn-text');
+                    const btnLoader = submitBtn.querySelector('.btn-loader');
+                    
+                    if (btnText) btnText.style.display = 'none';
+                    if (btnLoader) btnLoader.style.display = 'inline-block';
+                    submitBtn.disabled = true;
+
+                    try {
+                        const response = await fetch('../Actions/bulk_product_zip_action.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const result = await response.json();
+
+                        // Reset button state
+                        if (btnText) btnText.style.display = 'inline';
+                        if (btnLoader) btnLoader.style.display = 'none';
+                        submitBtn.disabled = false;
+
+                        if (result.status === 'success') {
+                            // Show success message with details
+                            let message = `Successfully processed ${result.processed_rows} row(s).\n`;
+                            message += `Created: ${result.created} product(s)\n`;
+                            if (result.skipped > 0) {
+                                message += `Skipped: ${result.skipped} row(s)`;
+                            }
+
+                            let errorDetails = '';
+                            if (result.errors && result.errors.length > 0) {
+                                errorDetails = '<div class="error-details"><strong>Errors:</strong><ul>';
+                                result.errors.forEach(error => {
+                                    errorDetails += '<li>' + error + '</li>';
+                                });
+                                errorDetails += '</ul></div>';
+                            }
+
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: result.skipped > 0 ? 'warning' : 'success',
+                                    title: result.skipped > 0 ? 'Partially Successful' : 'Upload Successful',
+                                    html: `
+                                        <p>${message}</p>
+                                        ${errorDetails}
+                                    `,
+                                    confirmButtonText: 'OK',
+                                    confirmButtonColor: '#7FB685'
+                                }).then(() => {
+                                    // Reload products table
+                                    if (typeof loadProducts === 'function') {
+                                        loadProducts();
+                                    }
+                                    closeBulkUploadModal();
+                                });
+                            }
+                        } else {
+                            // Show error message
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Upload Failed',
+                                    text: result.message || 'Failed to process the bulk upload. Please try again.',
+                                    confirmButtonColor: '#7FB685'
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Bulk upload error:', error);
+                        
+                        // Reset button state
+                        if (btnText) btnText.style.display = 'inline';
+                        if (btnLoader) btnLoader.style.display = 'none';
+                        submitBtn.disabled = false;
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while processing the upload. Please try again.',
+                                confirmButtonColor: '#7FB685'
+                            });
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

@@ -1,0 +1,156 @@
+<?php
+/**
+ * Paystack Callback Page
+ * Landing page after Paystack payment - triggers payment verification
+ */
+
+require_once __DIR__ . '/../settings/core.php';
+
+// Get reference from URL parameter
+$reference = isset($_GET['reference']) ? trim($_GET['reference']) : '';
+
+if (empty($reference)) {
+    // No reference provided - redirect to checkout with error
+    set_flash_message('error', 'Payment reference not found. Please try again.');
+    redirect('checkout.php');
+}
+
+// Get cart total from session or calculate it
+require_once __DIR__ . '/../Controllers/cart_controller.php';
+$cart_controller = new cart_controller();
+$cart_total = $cart_controller->get_cart_total_ctr();
+
+if ($cart_total <= 0) {
+    set_flash_message('error', 'Cart is empty. Cannot verify payment.');
+    redirect('cart.php');
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifying Payment - Wellness 360</title>
+    <link rel="stylesheet" href="../Css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .verification-container {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .verification-content {
+            text-align: center;
+            max-width: 500px;
+        }
+        .verification-spinner {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .verification-message {
+            font-size: 1.25rem;
+            color: var(--foreground);
+            margin-bottom: 0.5rem;
+        }
+        .verification-subtitle {
+            color: var(--muted-foreground);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.php">
+                        <h1>Wellness 360</h1>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Verification Section -->
+    <section class="verification-container">
+        <div class="verification-content">
+            <div class="verification-spinner">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <h2 class="verification-message">Verifying Payment...</h2>
+            <p class="verification-subtitle">Please wait while we confirm your payment</p>
+        </div>
+    </section>
+
+    <script>
+        // Automatically verify payment on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            verifyPayment();
+        });
+
+        async function verifyPayment() {
+            const reference = '<?php echo htmlspecialchars($reference, ENT_QUOTES, 'UTF-8'); ?>';
+            const totalAmount = <?php echo $cart_total; ?>;
+
+            try {
+                const response = await fetch('../Actions/paystack_verify_payment.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        reference: reference,
+                        total_amount: totalAmount
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success' && result.verified === true) {
+                    // Payment verified successfully - redirect to success page
+                    const params = new URLSearchParams({
+                        order_id: result.order_id,
+                        invoice_no: result.invoice_no,
+                        total: result.total_amount,
+                        reference: result.payment_reference
+                    });
+                    window.location.href = 'payment_success.php?' + params.toString();
+                } else {
+                    // Payment verification failed
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Payment Verification Failed',
+                        text: result.message || 'We could not verify your payment. Please contact support.',
+                        confirmButtonText: 'Return to Checkout',
+                        confirmButtonColor: '#7FB685'
+                    }).then(() => {
+                        window.location.href = 'checkout.php';
+                    });
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Verification Error',
+                    text: 'An error occurred while verifying your payment. Please try again or contact support.',
+                    confirmButtonText: 'Return to Checkout',
+                    confirmButtonColor: '#7FB685'
+                }).then(() => {
+                    window.location.href = 'checkout.php';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+

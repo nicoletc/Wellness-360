@@ -136,16 +136,44 @@ $placeholderImage = 'uploads/placeholder.jpg';
                         </div>
                     </div>
                     
-                    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
-                        <p style="margin: 0; font-size: 0.9rem; color: #856404;">
-                            <i class="fas fa-info-circle"></i> This is a simulated payment. No actual payment will be processed.
+                    <!-- Payment Method Selection -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="payment_method" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                            Payment Method <span style="color: red;">*</span>
+                        </label>
+                        <select id="payment_method" name="payment_method" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="">Select Payment Method</option>
+                            <option value="paystack">Paystack</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="mobile_money">Mobile Money</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Payment Channel Selection (shown only for Paystack) -->
+                    <div id="payment_channel_container" style="margin-bottom: 1.5rem; display: none;">
+                        <label for="payment_channel" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                            Payment Channel <span style="color: red;">*</span>
+                        </label>
+                        <select id="payment_channel" name="payment_channel" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <option value="">Select Payment Channel</option>
+                            <option value="card">Card</option>
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="bank">Bank</option>
+                        </select>
+                    </div>
+                    
+                    <div style="background: #e7f3e8; border: 1px solid #7FB685; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                        <p style="margin: 0; font-size: 0.9rem; color: #2C3E35;">
+                            <i class="fas fa-shield-alt"></i> <strong>Secure Payment</strong><br>
+                            Your payment information is encrypted and secure.
                         </p>
                     </div>
                     
-                    <button id="simulate-payment-btn" 
+                    <button id="pay-now-btn" 
                             class="btn btn-primary" 
-                            style="width: 100%; padding: 1rem; font-size: 1.1rem;">
-                        <i class="fas fa-credit-card"></i> Simulate Payment
+                            style="width: 100%; padding: 1rem; font-size: 1.1rem;"
+                            disabled>
+                        <i class="fas fa-lock"></i> Proceed to Payment
                     </button>
                 </div>
             </div>

@@ -234,41 +234,109 @@ class ProfileModel extends db_connection {
     }
     
     /**
-     * Get recommended content (dummy data for now)
+     * Get recommended content based on user behavior
      * @param int $customer_id Customer ID
-     * @return array Recommended items
+     * @return array Recommended items (products, articles, workshops)
      */
     public function getRecommendedContent($customer_id) {
-        // Dummy recommendations - will be replaced with actual recommendations later
-        return [
-            [
-                'id' => 1,
-                'title' => 'Premium Organic Green Tea',
-                'description' => 'A refreshing blend of organic green tea leaves, perfect for your daily wellness routine.',
-                'price' => 45.00,
-                'image' => 'uploads/placeholder.jpg',
-                'category' => 'Products',
+        $customer_id = (int)$customer_id;
+        $recommendations = [];
+        
+        if (!$this->db_connect()) {
+            return [];
+        }
+        
+        // Get user's top interests
+        require_once __DIR__ . '/ActivityModel.php';
+        $activityModel = new ActivityModel();
+        $topInterests = $activityModel->getUserTopInterests($customer_id, 3);
+        
+        // If no interests yet, return empty (user needs to browse first)
+        if (empty($topInterests)) {
+            return [];
+        }
+        
+        // Extract category IDs
+        $category_ids = array_column($topInterests, 'category_id');
+        $category_ids_str = implode(',', array_map('intval', $category_ids));
+        
+        // Get user's activity summary to understand preferences
+        $activitySummary = $activityModel->getUserActivitySummary($customer_id, 30);
+        
+        // Get products user has viewed but not purchased
+        $viewed_products_sql = "SELECT DISTINCT ua.content_id as product_id
+                               FROM user_activity ua
+                               LEFT JOIN orders o ON o.customer_id = $customer_id
+                               LEFT JOIN orderdetails od ON o.order_id = od.order_id AND od.product_id = ua.content_id
+                               WHERE ua.customer_id = $customer_id
+                               AND ua.content_type = 'product'
+                               AND ua.category_id IN ($category_ids_str)
+                               AND od.product_id IS NULL
+                               ORDER BY ua.viewed_at DESC
+                               LIMIT 3";
+        $viewed_products = $this->db_fetch_all($viewed_products_sql);
+        $viewed_product_ids = $viewed_products ? array_column($viewed_products, 'product_id') : [];
+        
+        // Recommend products from top interest categories (excluding already viewed)
+        $products_sql = "SELECT p.product_id, p.product_title, p.product_price, p.product_image, p.product_desc,
+                               c.cat_name
+                        FROM products p
+                        INNER JOIN category c ON p.product_cat = c.cat_id
+                        WHERE p.product_cat IN ($category_ids_str)
+                        " . (!empty($viewed_product_ids) ? "AND p.product_id NOT IN (" . implode(',', array_map('intval', $viewed_product_ids)) . ")" : "") . "
+                        AND p.stock > 0
+                        ORDER BY p.date_added DESC
+                        LIMIT 3";
+        $products = $this->db_fetch_all($products_sql);
+        
+        // Format products
+        foreach ($products as $product) {
+            $recommendations[] = [
+                'id' => (int)$product['product_id'],
+                'title' => $product['product_title'],
+                'description' => substr($product['product_desc'] ?? 'Quality wellness product', 0, 100) . '...',
+                'price' => floatval($product['product_price']),
+                'image' => $product['product_image'] ?: 'uploads/placeholder.jpg',
+                'category' => $product['cat_name'] ?? 'Products',
                 'type' => 'product'
-            ],
-            [
-                'id' => 2,
-                'title' => 'Understanding Mental Health',
-                'description' => 'A comprehensive guide to mental wellness and self-care practices.',
-                'date' => '2024-01-15',
+            ];
+        }
+        
+        // Get articles from top interest categories (excluding already read)
+        $read_articles_sql = "SELECT DISTINCT article_id 
+                             FROM article_views 
+                             WHERE user_id = $customer_id";
+        $read_articles = $this->db_fetch_all($read_articles_sql);
+        $read_article_ids = $read_articles ? array_column($read_articles, 'article_id') : [];
+        
+        $articles_sql = "SELECT a.article_id, a.article_title, a.article_author, a.date_added,
+                               c.cat_name
+                        FROM articles a
+                        INNER JOIN category c ON a.article_cat = c.cat_id
+                        WHERE a.article_cat IN ($category_ids_str)
+                        " . (!empty($read_article_ids) ? "AND a.article_id NOT IN (" . implode(',', array_map('intval', $read_article_ids)) . ")" : "") . "
+                        ORDER BY a.date_added DESC
+                        LIMIT 2";
+        $articles = $this->db_fetch_all($articles_sql);
+        
+        // Format articles
+        foreach ($articles as $article) {
+            $recommendations[] = [
+                'id' => (int)$article['article_id'],
+                'title' => $article['article_title'],
+                'description' => 'Based on your interest in ' . ($article['cat_name'] ?? 'wellness') . ' topics',
+                'date' => date('Y-m-d', strtotime($article['date_added'])),
                 'image' => 'uploads/placeholder.jpg',
-                'category' => 'Articles',
+                'category' => $article['cat_name'] ?? 'Articles',
                 'type' => 'article'
-            ],
-            [
-                'id' => 3,
-                'title' => 'Yoga Mat Premium',
-                'description' => 'High-quality yoga mat for your fitness and meditation sessions.',
-                'price' => 120.00,
-                'image' => 'uploads/placeholder.jpg',
-                'category' => 'Products',
-                'type' => 'product'
-            ]
-        ];
+            ];
+        }
+        
+        // Shuffle recommendations for variety
+        shuffle($recommendations);
+        
+        // Limit to 6 recommendations
+        return array_slice($recommendations, 0, 6);
     }
 }
 

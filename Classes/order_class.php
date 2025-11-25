@@ -120,7 +120,7 @@ class order_class extends db_connection
     
     /**
      * Record payment entry in the payments table
-     * @param array $data Payment data (customer_id, order_id, amt, currency)
+     * @param array $data Payment data (customer_id, order_id, amt, currency, payment_method, transaction_ref, authorization_code, payment_channel)
      * @return array Result with status, message, and payment_id
      */
     public function recordPayment($data)
@@ -138,6 +138,12 @@ class order_class extends db_connection
         $amt = floatval($data['amt']);
         $currency = isset($data['currency']) ? $this->escape_string($data['currency']) : 'GHS';
         
+        // Optional Paystack fields
+        $payment_method = isset($data['payment_method']) ? $this->escape_string($data['payment_method']) : null;
+        $transaction_ref = isset($data['transaction_ref']) ? $this->escape_string($data['transaction_ref']) : null;
+        $authorization_code = isset($data['authorization_code']) ? $this->escape_string($data['authorization_code']) : null;
+        $payment_channel = isset($data['payment_channel']) ? $this->escape_string($data['payment_channel']) : null;
+        
         if ($amt <= 0) {
             return [
                 'status' => false,
@@ -154,8 +160,32 @@ class order_class extends db_connection
             ];
         }
         
-        $sql = "INSERT INTO payment (amt, customer_id, order_id, currency, payment_date) 
-                VALUES ($amt, $customer_id, $order_id, '$currency', NOW())";
+        // Build SQL dynamically to include only provided optional fields
+        $fields = ['amt', 'customer_id', 'order_id', 'currency', 'payment_date'];
+        $values = ["$amt", "$customer_id", "$order_id", "'$currency'", 'NOW()'];
+        
+        if ($payment_method !== null) {
+            $fields[] = 'payment_method';
+            $values[] = "'$payment_method'";
+        }
+        
+        if ($transaction_ref !== null) {
+            $fields[] = 'transaction_ref';
+            $values[] = "'$transaction_ref'";
+        }
+        
+        if ($authorization_code !== null) {
+            $fields[] = 'authorization_code';
+            $values[] = "'$authorization_code'";
+        }
+        
+        if ($payment_channel !== null) {
+            $fields[] = 'payment_channel';
+            $values[] = "'$payment_channel'";
+        }
+        
+        $sql = "INSERT INTO payment (" . implode(', ', $fields) . ") 
+                VALUES (" . implode(', ', $values) . ")";
         
         if ($this->db_query($sql)) {
             $payment_id = mysqli_insert_id($this->db);

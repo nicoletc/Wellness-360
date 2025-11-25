@@ -170,9 +170,9 @@ $placeholderImage = 'uploads/placeholder.jpg';
                         </button>
                         <button class="btn-wishlist-large wishlist-btn" 
                                 data-product-id="<?php echo $product['product_id']; ?>"
-                                onclick="toggleWishlist(<?php echo $product['product_id']; ?>)">
+                                type="button">
                             <i class="far fa-heart"></i>
-                            Add to Wishlist
+                            <span class="wishlist-text">Add to Wishlist</span>
                         </button>
                     </div>
 
@@ -240,6 +240,10 @@ $placeholderImage = 'uploads/placeholder.jpg';
     <script src="../js/cart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/wishlist.js"></script>
+    <script src="../js/activity_tracker.js" 
+            data-page-type="product" 
+            data-content-id="<?php echo htmlspecialchars($product['product_id']); ?>" 
+            data-content-category="<?php echo htmlspecialchars($product['cat_name'] ?? 'general'); ?>"></script>
 </body>
 </html>
 
