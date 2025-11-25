@@ -80,16 +80,6 @@ require_admin();
                     </div>
                     <div class="admin-actions">
                         <div class="admin-actions-group">
-                            <button class="btn-admin-primary" onclick="downloadBulkTemplate()">
-                                <i class="fas fa-download"></i>
-                                Download Bulk Template
-                            </button>
-                            <button class="btn-admin-primary" onclick="openBulkUploadModal()">
-                                <i class="fas fa-upload"></i>
-                                Bulk Upload Products
-                            </button>
-                        </div>
-                        <div class="admin-actions-group">
                             <button class="btn-admin-primary" onclick="openAddModal()">
                                 <i class="fas fa-plus"></i>
                                 Add New Product
@@ -269,44 +259,6 @@ require_admin();
         </div>
     </div>
 
-    <!-- Bulk Upload Modal -->
-    <div class="modal" id="bulkUploadModal" style="display: none;">
-        <div class="modal-content modal-medium">
-            <div class="modal-header">
-                <h2>Bulk Upload Products</h2>
-                <span class="close" onclick="closeBulkUploadModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="bulk-upload-instructions">
-                    <h3>Instructions:</h3>
-                    <ol>
-                        <li>Download the bulk upload template using the "Download Bulk Template" button</li>
-                        <li>Fill in the CSV with your product data</li>
-                        <li>Add product images to the same folder as the CSV</li>
-                        <li>Zip the CSV and images together</li>
-                        <li>Upload the ZIP file here</li>
-                    </ol>
-                </div>
-                <form id="bulkUploadForm" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="zip_file">ZIP File <span class="required">*</span></label>
-                        <input type="file" id="zip_file" name="zip_file" accept=".zip" required>
-                        <small class="form-help">Upload a ZIP file containing the CSV and product images (max 50MB).</small>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary" onclick="closeBulkUploadModal()">Cancel</button>
-                        <button type="submit" class="btn-admin-primary">
-                            <span class="btn-text">Upload & Process</span>
-                            <span class="btn-loader" style="display: none;">
-                                <i class="fas fa-spinner fa-spin"></i> Processing...
-                            </span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- View Product Modal -->
     <div class="modal" id="viewProductModal" style="display: none;">
         <div class="modal-content modal-medium">
@@ -373,93 +325,6 @@ require_admin();
             if (preview) preview.style.display = 'none';
         }
 
-        function openBulkUploadModal() {
-            document.getElementById('bulkUploadModal').style.display = 'block';
-            document.getElementById('bulkUploadForm').reset();
-        }
-
-        function closeBulkUploadModal() {
-            document.getElementById('bulkUploadModal').style.display = 'none';
-        }
-
-        async function downloadBulkTemplate() {
-            // Show loading
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Downloading...',
-                    text: 'Preparing bulk upload template...',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-            }
-
-            try {
-                // Fetch the file
-                const response = await fetch('../Actions/download_bulk_template.php');
-                
-                if (!response.ok) {
-                    // Try to get error message from response
-                    const errorText = await response.text();
-                    throw new Error('Download failed: ' + response.status + ' ' + response.statusText + (errorText ? ' - ' + errorText : ''));
-                }
-
-                // Get the blob
-                const blob = await response.blob();
-                
-                // Check if we got a valid ZIP file (ZIP files start with PK)
-                if (blob.size === 0) {
-                    throw new Error('Downloaded file is empty');
-                }
-                
-                // Check if response is actually a ZIP (ZIP files start with "PK" - 50 4B in hex)
-                const arrayBuffer = await blob.arrayBuffer();
-                const uint8Array = new Uint8Array(arrayBuffer);
-                if (uint8Array.length < 2 || uint8Array[0] !== 0x50 || uint8Array[1] !== 0x4B) {
-                    // Not a valid ZIP, might be an error message
-                    const text = await blob.text();
-                    throw new Error('Server returned an error: ' + text);
-                }
-
-                // Create a download link
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'bulk_template.zip';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-
-                // Close loading and show success
-                if (typeof Swal !== 'undefined') {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Template Downloaded',
-                        text: 'The bulk upload template has been downloaded. Fill it in and zip it with your images.',
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                }
-            } catch (error) {
-                console.error('Download error:', error);
-                
-                // Close loading and show error
-                if (typeof Swal !== 'undefined') {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Download Failed',
-                        text: 'Failed to download the template. Please try again or contact support if the problem persists.',
-                        confirmButtonColor: '#7FB685'
-                    });
-                }
-            }
-        }
 
         // Close modal when clicking outside (only on the modal backdrop, not inside modal-content)
         window.addEventListener('click', function(event) {
@@ -477,15 +342,11 @@ require_admin();
             if (event.target == viewModal) {
                 viewModal.style.display = 'none';
             }
-            const bulkUploadModal = document.getElementById('bulkUploadModal');
-            if (event.target == bulkUploadModal) {
-                bulkUploadModal.style.display = 'none';
-            }
         });
 
         // Prevent modal from closing when clicking inside modal-content
         document.addEventListener('DOMContentLoaded', function() {
-            const modals = ['addProductModal', 'updateProductModal', 'viewProductModal', 'bulkUploadModal'];
+            const modals = ['addProductModal', 'updateProductModal', 'viewProductModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (modal) {
@@ -498,127 +359,6 @@ require_admin();
                 }
             });
 
-            // Handle bulk upload form submission
-            const bulkUploadForm = document.getElementById('bulkUploadForm');
-            if (bulkUploadForm) {
-                bulkUploadForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-
-                    const formData = new FormData();
-                    const zipFile = document.getElementById('zip_file').files[0];
-                    
-                    if (!zipFile) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'No File Selected',
-                                text: 'Please select a ZIP file to upload.'
-                            });
-                        }
-                        return;
-                    }
-
-                    // Check file size (50MB limit)
-                    if (zipFile.size > 50 * 1024 * 1024) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'File Too Large',
-                                text: 'The ZIP file must be less than 50MB.'
-                            });
-                        }
-                        return;
-                    }
-
-                    formData.append('zip_file', zipFile);
-
-                    // Show loading
-                    const submitBtn = bulkUploadForm.querySelector('button[type="submit"]');
-                    const btnText = submitBtn.querySelector('.btn-text');
-                    const btnLoader = submitBtn.querySelector('.btn-loader');
-                    
-                    if (btnText) btnText.style.display = 'none';
-                    if (btnLoader) btnLoader.style.display = 'inline-block';
-                    submitBtn.disabled = true;
-
-                    try {
-                        const response = await fetch('../Actions/bulk_product_zip_action.php', {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        const result = await response.json();
-
-                        // Reset button state
-                        if (btnText) btnText.style.display = 'inline';
-                        if (btnLoader) btnLoader.style.display = 'none';
-                        submitBtn.disabled = false;
-
-                        if (result.status === 'success') {
-                            // Show success message with details
-                            let message = `Successfully processed ${result.processed_rows} row(s).\n`;
-                            message += `Created: ${result.created} product(s)\n`;
-                            if (result.skipped > 0) {
-                                message += `Skipped: ${result.skipped} row(s)`;
-                            }
-
-                            let errorDetails = '';
-                            if (result.errors && result.errors.length > 0) {
-                                errorDetails = '<div class="error-details"><strong>Errors:</strong><ul>';
-                                result.errors.forEach(error => {
-                                    errorDetails += '<li>' + error + '</li>';
-                                });
-                                errorDetails += '</ul></div>';
-                            }
-
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: result.skipped > 0 ? 'warning' : 'success',
-                                    title: result.skipped > 0 ? 'Partially Successful' : 'Upload Successful',
-                                    html: `
-                                        <p>${message}</p>
-                                        ${errorDetails}
-                                    `,
-                                    confirmButtonText: 'OK',
-                                    confirmButtonColor: '#7FB685'
-                                }).then(() => {
-                                    // Reload products table
-                                    if (typeof loadProducts === 'function') {
-                                        loadProducts();
-                                    }
-                                    closeBulkUploadModal();
-                                });
-                            }
-                        } else {
-                            // Show error message
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Upload Failed',
-                                    text: result.message || 'Failed to process the bulk upload. Please try again.',
-                                    confirmButtonColor: '#7FB685'
-                                });
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Bulk upload error:', error);
-                        
-                        // Reset button state
-                        if (btnText) btnText.style.display = 'inline';
-                        if (btnLoader) btnLoader.style.display = 'none';
-                        submitBtn.disabled = false;
-
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'An error occurred while processing the upload. Please try again.',
-                                confirmButtonColor: '#7FB685'
-                            });
-                        }
-                    }
-                });
-            }
         });
     </script>
 </body>

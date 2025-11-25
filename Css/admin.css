@@ -819,26 +819,6 @@ body {
     max-width: 700px;
 }
 
-/* Bulk Upload Instructions */
-.bulk-upload-instructions {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-.bulk-upload-instructions h3 {
-    margin-top: 0;
-    font-size: 1rem;
-    color: #333;
-}
-
-.bulk-upload-instructions ol {
-    margin: 0.5rem 0;
-    padding-left: 1.5rem;
-    color: #666;
-    font-size: 0.9rem;
-}
 
 /* Loading State */
 .loading-text {

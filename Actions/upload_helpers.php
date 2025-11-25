@@ -46,7 +46,7 @@ function save_uploaded_image_strict(string $field, int $user_id, int $product_id
 }
 
 /**
- * Move an existing file path (used by bulk zip) into the strict uploads tree.
+ * Move an existing file path into the strict uploads tree.
  */
 function save_uploaded_image_from_path(string $srcAbs, int $user_id, int $product_id, string $origName): array {
     if (!file_exists($srcAbs)) return ['ok'=>false,'error'=>'Source missing'];
