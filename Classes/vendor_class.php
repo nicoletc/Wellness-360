@@ -273,7 +273,7 @@ class vendor_class extends db_connection
         }
 
         // Check if vendor is being used by products
-        $check_products = "SELECT COUNT(*) as count FROM products WHERE product_vendor = $vendor_id";
+        $check_products = "SELECT COUNT(*) as count FROM customer_products WHERE product_vendor = $vendor_id";
         $product_count = $this->db_fetch_one($check_products);
         
         if ($product_count && $product_count['count'] > 0) {

@@ -9,19 +9,19 @@ $contactMethods = [
     [
         'icon' => 'envelope',
         'title' => 'Email Us',
-        'value' => 'hello@wellness360.gh',
+        'value' => 'wellnessallround@gmail.com',
         'note' => 'We respond within 24 hours',
     ],
     [
         'icon' => 'phone',
         'title' => 'Call Us',
-        'value' => '+233 20 123 4567',
+        'value' => '0204567321',
         'note' => 'Mon-Fri, 9AM-5PM GMT',
     ],
     [
         'icon' => 'map-marker-alt',
         'title' => 'Visit Us',
-        'value' => 'Accra, Ghana',
+        'value' => '3rd Circular rd, Tema',
         'note' => 'Schedule an appointment',
     ],
 ];
@@ -69,7 +69,7 @@ $faqs = [
     ],
     [
         'question' => 'How do I become a vendor?',
-        'answer' => 'We\'re always looking for quality wellness vendors! Email us at vendors@wellness360.gh with information about your business, products, and certifications. Our team will review your application.',
+        'answer' => 'We\'re always looking for quality wellness vendors! Email us at wellnessallround@gmail.com with information about your business, products, and certifications. Our team will review your application.',
     ],
     [
         'question' => 'Is my personal information safe?',

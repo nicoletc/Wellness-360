@@ -52,7 +52,7 @@ try {
                 r.registered_at,
                 r.status
             FROM workshop_registrations r
-            JOIN customer c ON c.customer_id = r.customer_id
+            JOIN customers c ON c.customer_id = r.customer_id
             WHERE r.workshop_id = $workshop_id
             ORDER BY r.registered_at DESC";
     

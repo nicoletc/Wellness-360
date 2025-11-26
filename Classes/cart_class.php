@@ -16,11 +16,29 @@ class cart_class extends db_connection
     public function getUserIdentifier()
     {
         $customer_id = null;
+        
+        // Get IP address - handle both IPv4 and IPv6
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        
+        // If IPv6 localhost (::1), convert to IPv4 localhost for consistency
+        if ($ip_address === '::1') {
+            $ip_address = '127.0.0.1';
+        }
+        
+        // Normalize IP address (remove any port numbers if present)
+        if (strpos($ip_address, ':') !== false && strpos($ip_address, '::') === false) {
+            // IPv6 with port, extract IP part
+            $parts = explode(':', $ip_address);
+            if (count($parts) > 1) {
+                $ip_address = implode(':', array_slice($parts, 0, -1));
+            }
+        }
         
         if (is_logged_in()) {
             $customer_id = current_user_id();
         }
+        
+        error_log("Cart getUserIdentifier - customer_id: " . ($customer_id ?? 'null') . ", ip: $ip_address");
         
         return [
             'customer_id' => $customer_id,
@@ -43,14 +61,23 @@ class cart_class extends db_connection
             return false;
         }
         
+        $ip_address_escaped = $this->escape_string($ip_address);
+        
         if ($customer_id) {
-            // For logged-in users, check by customer_id
-            $sql = "SELECT * FROM cart WHERE p_id = $product_id AND c_id = " . (int)$customer_id;
+            // For logged-in users, check by customer_id (preferred) OR by primary key (p_id, ip_add) with matching c_id
+            // This handles cases where item was added with IP but user is now logged in
+            $sql = "SELECT * FROM carts 
+                    WHERE p_id = $product_id 
+                    AND (
+                        c_id = " . (int)$customer_id . " 
+                        OR (ip_add = '$ip_address_escaped' AND c_id = " . (int)$customer_id . ")
+                    )
+                    LIMIT 1";
         } else {
-            // For guests, check by IP address and ensure c_id is NULL
+            // For guests, check by IP address and ensure c_id is NULL or 0
             // Primary key is (p_id, ip_add), so this query is efficient
-            $ip_address = $this->escape_string($ip_address);
-            $sql = "SELECT * FROM cart WHERE p_id = $product_id AND ip_add = '$ip_address' AND c_id IS NULL";
+            // Use (c_id IS NULL OR c_id = 0) to handle both cases
+            $sql = "SELECT * FROM carts WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND (c_id IS NULL OR c_id = 0) LIMIT 1";
         }
         
         $result = $this->db_fetch_one($sql);
@@ -88,7 +115,7 @@ class cart_class extends db_connection
         }
         
         // Verify product exists
-        $product_sql = "SELECT product_id, product_price, stock FROM products WHERE product_id = $product_id";
+        $product_sql = "SELECT product_id, product_price, stock FROM customer_products WHERE product_id = $product_id";
         $product = $this->db_fetch_one($product_sql);
         
         if (!$product) {
@@ -138,25 +165,154 @@ class cart_class extends db_connection
         
         $ip_address_escaped = $this->escape_string($ip_address);
         
-        // Build INSERT query - handle NULL for customer_id properly
-        // If c_id doesn't allow NULL, we'll omit it from the INSERT for guest users
+        // Use INSERT ... ON DUPLICATE KEY UPDATE to handle race conditions
+        // This prevents duplicate key errors if the product was added between the check and insert
+        // Note: Primary key is (p_id, ip_add), so ON DUPLICATE KEY UPDATE will trigger on same product+IP combination
         if ($customer_id) {
-            $sql = "INSERT INTO cart (p_id, ip_add, c_id, qty) 
-                    VALUES ($product_id, '$ip_address_escaped', " . (int)$customer_id . ", $quantity)";
+            // For logged-in users, ensure c_id is set correctly
+            // If a row exists with same (p_id, ip_add) but different c_id, update both qty and c_id
+            $sql = "INSERT INTO carts (p_id, ip_add, c_id, qty) 
+                    VALUES ($product_id, '$ip_address_escaped', " . (int)$customer_id . ", $quantity)
+                    ON DUPLICATE KEY UPDATE 
+                        qty = qty + $quantity,
+                        c_id = " . (int)$customer_id;
         } else {
-            // For guest users, try inserting without c_id first (if column allows NULL)
-            // If that fails, we'll use 0 as a fallback
-            $sql = "INSERT INTO cart (p_id, ip_add, qty) 
-                    VALUES ($product_id, '$ip_address_escaped', $quantity)";
+            // For guest users, insert without c_id (NULL)
+            // Explicitly set c_id to NULL to ensure it's not 0 or empty
+            $sql = "INSERT INTO carts (p_id, ip_add, c_id, qty) 
+                    VALUES ($product_id, '$ip_address_escaped', NULL, $quantity)
+                    ON DUPLICATE KEY UPDATE 
+                        qty = qty + $quantity,
+                        c_id = NULL";
         }
         
-        if ($this->db_query($sql)) {
+        // Execute the query
+        $query_result = $this->db_query($sql);
+        $db_error = mysqli_error($this->db);
+        $affected_rows = mysqli_affected_rows($this->db);
+        
+        // Log for debugging
+        error_log("Cart add query - product_id: $product_id, customer_id: " . ($customer_id ?? 'null') . ", ip: $ip_address");
+        error_log("Cart add SQL: " . $sql);
+        error_log("Cart add query result: " . ($query_result ? 'true' : 'false'));
+        error_log("Cart add affected_rows: $affected_rows");
+        error_log("Cart add db_error: " . ($db_error ? $db_error : 'none'));
+        
+        // For guests, also log the escaped IP to verify it's correct
+        if (!$customer_id) {
+            error_log("Cart add: Guest user - escaped IP: '$ip_address_escaped', original IP: '$ip_address'");
+        }
+        
+        if ($query_result) {
+            // Verify the item was actually added/updated by checking if it exists now
+            // Use a small delay to ensure database consistency
+            usleep(100000); // 100ms delay
+            
+            $verify_item = $this->productExistsInCart($product_id, $customer_id, $ip_address);
+            
+            error_log("Cart add verification - found: " . ($verify_item ? 'yes' : 'no'));
+            if ($verify_item) {
+                error_log("Cart add verification - qty: " . $verify_item['qty'] . ", c_id: " . ($verify_item['c_id'] ?? 'null'));
+            }
+            
+            if (!$verify_item) {
+                // Item was not added - this shouldn't happen but handle it
+                error_log("Cart add: Item not found after insert/update. product_id: $product_id, customer_id: " . ($customer_id ?? 'null') . ", ip: $ip_address");
+                
+                // Try one more time with a direct query - try multiple variations
+                $direct_results = [];
+                
+                if ($customer_id) {
+                    // For logged-in users, try multiple queries
+                    $direct_check1 = "SELECT * FROM carts WHERE p_id = $product_id AND c_id = " . (int)$customer_id . " LIMIT 1";
+                    $direct_check2 = "SELECT * FROM carts WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND c_id = " . (int)$customer_id . " LIMIT 1";
+                    $direct_result1 = $this->db_fetch_one($direct_check1);
+                    $direct_result2 = $this->db_fetch_one($direct_check2);
+                    if ($direct_result1) $direct_results[] = $direct_result1;
+                    if ($direct_result2 && $direct_result2 !== $direct_result1) $direct_results[] = $direct_result2;
+                } else {
+                    // For guests, try multiple query variations
+                    $direct_check1 = "SELECT * FROM carts WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND (c_id IS NULL OR c_id = 0) LIMIT 1";
+                    $direct_check2 = "SELECT * FROM carts WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' LIMIT 1";
+                    $direct_result1 = $this->db_fetch_one($direct_check1);
+                    $direct_result2 = $this->db_fetch_one($direct_check2);
+                    if ($direct_result1) $direct_results[] = $direct_result1;
+                    if ($direct_result2 && $direct_result2 !== $direct_result1) $direct_results[] = $direct_result2;
+                    
+                    // Also check what's actually in the database
+                    $debug_check = "SELECT * FROM carts WHERE p_id = $product_id AND ip_add = '$ip_address_escaped'";
+                    $debug_results = $this->db_fetch_all($debug_check);
+                    error_log("Cart add: Debug query found " . count($debug_results) . " rows for p_id=$product_id, ip=$ip_address_escaped");
+                    if ($debug_results) {
+                        foreach ($debug_results as $row) {
+                            error_log("Cart add: Found row - p_id: " . $row['p_id'] . ", ip_add: " . $row['ip_add'] . ", c_id: " . ($row['c_id'] ?? 'NULL') . ", qty: " . $row['qty']);
+                        }
+                    }
+                }
+                
+                if (!empty($direct_results)) {
+                    error_log("Cart add: Direct query found item, using it");
+                    $verify_item = $direct_results[0];
+                } else {
+                    error_log("Cart add: Direct query also failed - no items found");
+                    error_log("Cart add: Query was: " . ($customer_id ? "c_id = " . (int)$customer_id : "ip_add = '$ip_address_escaped' AND c_id IS NULL"));
+                    
+                    // Return more detailed error message
+                    $error_msg = 'Failed to add product to cart. ';
+                    if (!$customer_id) {
+                        $error_msg .= 'Please try logging in or contact support if the problem persists.';
+                    } else {
+                        $error_msg .= 'Please try again.';
+                    }
+                    
+                    return [
+                        'status' => false,
+                        'message' => $error_msg
+                    ];
+                }
+            }
+            
+            // Verify stock with updated quantity
+            if (isset($product['stock']) && $product['stock'] < $verify_item['qty']) {
+                // Revert the quantity if it exceeds stock
+                $revert_quantity = $verify_item['qty'] - $quantity;
+                if ($revert_quantity > 0) {
+                    $this->updateQuantity($verify_item, $product['stock']);
+                } else {
+                    $this->remove($product_id, $customer_id, $ip_address);
+                }
+                return [
+                    'status' => false,
+                    'message' => 'Insufficient stock. Available: ' . $product['stock']
+                ];
+            }
+            
+            // Log successful addition for debugging
+            error_log("Cart add: Success. product_id: $product_id, customer_id: " . ($customer_id ?? 'null') . ", ip: $ip_address, qty: " . $verify_item['qty']);
+            
             return [
                 'status' => true,
                 'message' => 'Product added to cart successfully.'
             ];
         } else {
             $error = mysqli_error($this->db);
+            
+            // If it's a duplicate key error, try to update instead
+            if (strpos($error, 'Duplicate entry') !== false) {
+                // Product exists, update quantity
+                $existing = $this->productExistsInCart($product_id, $customer_id, $ip_address);
+                if ($existing) {
+                    $new_quantity = (int)$existing['qty'] + $quantity;
+                    if (isset($product['stock']) && $product['stock'] < $new_quantity) {
+                        return [
+                            'status' => false,
+                            'message' => 'Insufficient stock. Available: ' . $product['stock'] . ', Requested: ' . $new_quantity
+                        ];
+                    }
+                    return $this->updateQuantity($existing, $new_quantity);
+                }
+            }
+            
             return [
                 'status' => false,
                 'message' => 'Failed to add product to cart: ' . $error
@@ -193,7 +349,7 @@ class cart_class extends db_connection
         }
         
         // Verify product exists and check stock
-        $product_sql = "SELECT stock FROM products WHERE product_id = $product_id";
+        $product_sql = "SELECT stock FROM customer_products WHERE product_id = $product_id";
         $product = $this->db_fetch_one($product_sql);
         
         if (!$product) {
@@ -220,12 +376,12 @@ class cart_class extends db_connection
         $ip_address_escaped = $this->escape_string($ip_address);
         
         if ($customer_id) {
-            $sql = "UPDATE cart SET qty = $quantity 
+            $sql = "UPDATE carts SET qty = $quantity 
                     WHERE p_id = $product_id AND c_id = " . (int)$customer_id;
         } else {
-            // For guests, update by primary key (p_id, ip_add) where c_id IS NULL
-            $sql = "UPDATE cart SET qty = $quantity 
-                    WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND c_id IS NULL";
+            // For guests, update by primary key (p_id, ip_add) where c_id IS NULL or 0
+            $sql = "UPDATE carts SET qty = $quantity 
+                    WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND (c_id IS NULL OR c_id = 0)";
         }
         
         if ($this->db_query($sql)) {
@@ -267,11 +423,11 @@ class cart_class extends db_connection
         }
         
         if ($customer_id) {
-            $sql = "DELETE FROM cart WHERE p_id = $product_id AND c_id = " . (int)$customer_id;
+            $sql = "DELETE FROM carts WHERE p_id = $product_id AND c_id = " . (int)$customer_id;
         } else {
-            // For guests, delete by primary key (p_id, ip_add) where c_id IS NULL
+            // For guests, delete by primary key (p_id, ip_add) where c_id IS NULL or 0
             $ip_address_escaped = $this->escape_string($ip_address);
-            $sql = "DELETE FROM cart WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND c_id IS NULL";
+            $sql = "DELETE FROM carts WHERE p_id = $product_id AND ip_add = '$ip_address_escaped' AND (c_id IS NULL OR c_id = 0)";
         }
         
         if ($this->db_query($sql)) {
@@ -308,17 +464,17 @@ class cart_class extends db_connection
         
         if ($customer_id) {
             $sql = "SELECT c.*, p.product_title, p.product_price, p.product_image, p.stock
-                    FROM cart c
-                    INNER JOIN products p ON c.p_id = p.product_id
+                    FROM carts c
+                    INNER JOIN customer_products p ON c.p_id = p.product_id
                     WHERE c.c_id = " . (int)$customer_id . "
                     ORDER BY c.p_id ASC";
         } else {
             // For guests, get items by IP address where c_id IS NULL
             $ip_address_escaped = $this->escape_string($ip_address);
             $sql = "SELECT c.*, p.product_title, p.product_price, p.product_image, p.stock
-                    FROM cart c
-                    INNER JOIN products p ON c.p_id = p.product_id
-                    WHERE c.ip_add = '$ip_address_escaped' AND c.c_id IS NULL
+                    FROM carts c
+                    INNER JOIN customer_products p ON c.p_id = p.product_id
+                    WHERE c.ip_add = '$ip_address_escaped' AND (c.c_id IS NULL OR c.c_id = 0)
                     ORDER BY c.p_id ASC";
         }
         
@@ -370,11 +526,11 @@ class cart_class extends db_connection
         }
         
         if ($customer_id) {
-            $sql = "DELETE FROM cart WHERE c_id = " . (int)$customer_id;
+            $sql = "DELETE FROM carts WHERE c_id = " . (int)$customer_id;
         } else {
-            // For guests, delete all items by IP address where c_id IS NULL
+            // For guests, delete all items by IP address where c_id IS NULL or 0
             $ip_address_escaped = $this->escape_string($ip_address);
-            $sql = "DELETE FROM cart WHERE ip_add = '$ip_address_escaped' AND c_id IS NULL";
+            $sql = "DELETE FROM carts WHERE ip_add = '$ip_address_escaped' AND (c_id IS NULL OR c_id = 0)";
         }
         
         if ($this->db_query($sql)) {
@@ -444,6 +600,11 @@ class cart_class extends db_connection
             ];
         }
         
+        // Normalize IP address (convert IPv6 localhost to IPv4)
+        if ($ip_address === '::1') {
+            $ip_address = '127.0.0.1';
+        }
+        
         $ip_address_escaped = $this->escape_string($ip_address);
         $customer_id = (int)$customer_id;
         
@@ -454,22 +615,42 @@ class cart_class extends db_connection
             ];
         }
         
+        error_log("Cart transfer: IP=$ip_address, Customer ID=$customer_id");
+        
         // Get guest cart items (items with this IP and NULL c_id)
-        $ip_address_escaped = $this->escape_string($ip_address);
+        // Try both the normalized IP and original IP if different
         $sql = "SELECT c.*, p.product_title, p.product_price, p.product_image, p.stock
-                FROM cart c
-                INNER JOIN products p ON c.p_id = p.product_id
+                FROM carts c
+                INNER JOIN customer_products p ON c.p_id = p.product_id
                 WHERE c.ip_add = '$ip_address_escaped' AND (c.c_id IS NULL OR c.c_id = 0)
                 ORDER BY c.p_id ASC";
         
         $guest_items = $this->db_fetch_all($sql);
         
+        error_log("Cart transfer: Found " . count($guest_items) . " guest items for IP=$ip_address_escaped");
+        
         if (!$guest_items || empty($guest_items)) {
-            return [
-                'status' => true,
-                'message' => 'No items to transfer.',
-                'transferred' => 0
-            ];
+            // Try alternative IP formats (IPv6 vs IPv4)
+            $alt_ip = ($ip_address === '127.0.0.1') ? '::1' : '127.0.0.1';
+            $alt_ip_escaped = $this->escape_string($alt_ip);
+            $alt_sql = "SELECT c.*, p.product_title, p.product_price, p.product_image, p.stock
+                        FROM carts c
+                        INNER JOIN customer_products p ON c.p_id = p.product_id
+                        WHERE c.ip_add = '$alt_ip_escaped' AND (c.c_id IS NULL OR c.c_id = 0)
+                        ORDER BY c.p_id ASC";
+            $alt_items = $this->db_fetch_all($alt_sql);
+            
+            if ($alt_items && !empty($alt_items)) {
+                error_log("Cart transfer: Found " . count($alt_items) . " items with alternative IP=$alt_ip_escaped");
+                $guest_items = $alt_items;
+                $ip_address_escaped = $alt_ip_escaped; // Use the alternative IP for updates
+            } else {
+                return [
+                    'status' => true,
+                    'message' => 'No items to transfer.',
+                    'transferred' => 0
+                ];
+            }
         }
         
         // Get existing customer cart items
@@ -497,7 +678,7 @@ class cart_class extends db_connection
                 $existing_ip = $this->escape_string($customer_cart_map[$product_id]['ip_address']);
                 
                 // Update the existing customer cart item (identified by p_id and its ip_add)
-                $update_sql = "UPDATE cart SET qty = $new_quantity 
+                $update_sql = "UPDATE carts SET qty = $new_quantity 
                                WHERE p_id = $product_id 
                                AND ip_add = '$existing_ip' 
                                AND c_id = $customer_id";
@@ -507,15 +688,15 @@ class cart_class extends db_connection
                 }
                 
                 // Delete the guest cart item (since we merged it)
-                $delete_sql = "DELETE FROM cart 
+                $delete_sql = "DELETE FROM carts 
                                WHERE p_id = $product_id 
                                AND ip_add = '$ip_address_escaped' 
-                               AND c_id IS NULL";
+                               AND (c_id IS NULL OR c_id = 0)";
                 $this->db_query($delete_sql);
             } else {
                 // Simply update c_id for the guest cart item (primary key stays the same: p_id, ip_add)
                 // This is more efficient than delete + insert
-                $update_sql = "UPDATE cart SET c_id = $customer_id 
+                $update_sql = "UPDATE carts SET c_id = $customer_id 
                                WHERE p_id = $product_id 
                                AND ip_add = '$ip_address_escaped' 
                                AND (c_id IS NULL OR c_id = 0)";

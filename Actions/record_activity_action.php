@@ -59,11 +59,16 @@ try {
     }
     
 } catch (Exception $e) {
-    error_log("Error recording activity: " . $e->getMessage());
+    $error_message = $e->getMessage();
+    $error_trace = $e->getTraceAsString();
+    
+    error_log("Error recording activity: " . $error_message);
+    error_log("Stack trace: " . $error_trace);
+    error_log("Input data: " . print_r($input ?? [], true));
     
     json_response([
         'status' => false,
-        'message' => 'An error occurred while recording activity.'
+        'message' => 'An error occurred while recording activity: ' . $error_message
     ], 500);
 }
 

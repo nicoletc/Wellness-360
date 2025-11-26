@@ -216,7 +216,7 @@ class ActivityTracker {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    activity_type: 'engagement',
+                    activity_type: 'page_view', // Changed from 'engagement' to valid ENUM value
                     content_type: this.pageType,
                     content_id: this.contentId,
                     category_id: this.categoryId,

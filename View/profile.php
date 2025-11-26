@@ -29,6 +29,9 @@ $recommendedContent = $data['recommendedContent'] ?? [];
 $articlesRead = $data['articlesRead'] ?? [];
 $orders = $data['orders'] ?? [];
 $wishlist = $data['wishlist'] ?? [];
+$reminderHistory = $data['reminderHistory'] ?? [];
+$reminderPreferences = $data['reminderPreferences'] ?? null;
+$categories = $data['categories'] ?? [];
 $activeTab = $data['activeTab'] ?? 'orders';
 $memberSince = $data['memberSince'] ?? 'Recently';
 $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
@@ -42,6 +45,7 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? 'uploads/placeholder_avatar.j
     <title>Profile - Wellness 360</title>
     <link rel="stylesheet" href="../Css/style.css">
     <link rel="stylesheet" href="../Css/profile.css">
+    <link rel="stylesheet" href="../Css/notifications.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -202,6 +206,12 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? 'uploads/placeholder_avatar.j
                         </a>
                         <a href="profile.php?tab=recommended" class="profile-tab <?php echo $activeTab === 'recommended' ? 'active' : ''; ?>">
                             Recommended
+                        </a>
+                        <a href="profile.php?tab=reminders" class="profile-tab <?php echo $activeTab === 'reminders' ? 'active' : ''; ?>">
+                            Reminders
+                        </a>
+                        <a href="profile.php?tab=settings" class="profile-tab <?php echo $activeTab === 'settings' ? 'active' : ''; ?>">
+                            Settings
                         </a>
                     </div>
                 </section>
@@ -375,6 +385,137 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? 'uploads/placeholder_avatar.j
                                 </div>
                             <?php endif; ?>
                         </div>
+                    
+                    <?php elseif ($activeTab === 'reminders'): ?>
+                        <!-- Reminder History Tab -->
+                        <div class="profile-content-block">
+                            <h2 class="content-block-title">Reminder History</h2>
+                            <?php if (empty($reminderHistory)): ?>
+                                <div class="empty-state">
+                                    <i class="fas fa-bell"></i>
+                                    <p>No reminders yet. Your daily wellness reminders will appear here!</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="reminder-history-list">
+                                    <?php foreach ($reminderHistory as $reminder): ?>
+                                        <div class="reminder-history-item <?php echo $reminder['is_read'] ? 'read' : 'unread'; ?>">
+                                            <div class="reminder-history-icon">
+                                                <i class="fas fa-lightbulb"></i>
+                                            </div>
+                                            <div class="reminder-history-content">
+                                                <h3 class="reminder-history-title"><?php echo htmlspecialchars($reminder['title']); ?></h3>
+                                                <p class="reminder-history-message"><?php echo nl2br(htmlspecialchars($reminder['message'])); ?></p>
+                                                <div class="reminder-history-meta">
+                                                    <?php if (!empty($reminder['cat_name'])): ?>
+                                                        <span class="reminder-category">
+                                                            <i class="fas fa-tag"></i>
+                                                            <?php echo htmlspecialchars($reminder['cat_name']); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <span class="reminder-date">
+                                                        <i class="fas fa-calendar"></i>
+                                                        <?php echo date('F j, Y', strtotime($reminder['sent_date'])); ?>
+                                                    </span>
+                                                    <span class="reminder-type">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        <?php echo ucfirst(str_replace('_', ' ', $reminder['reminder_type'])); ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <?php if (!$reminder['is_read']): ?>
+                                                <span class="reminder-unread-badge">New</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    
+                    <?php elseif ($activeTab === 'settings'): ?>
+                        <!-- Reminder Settings Tab -->
+                        <div class="profile-content-block">
+                            <h2 class="content-block-title">Reminder Settings</h2>
+                            <form id="reminderPreferencesForm" class="reminder-settings-form">
+                                <div class="settings-section">
+                                    <h3 class="settings-section-title">Reminder Frequency</h3>
+                                    <div class="form-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="reminder_frequency" value="daily" 
+                                                   <?php echo ($reminderPreferences['reminder_frequency'] ?? 'daily') === 'daily' ? 'checked' : ''; ?>>
+                                            <span>Daily</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="reminder_frequency" value="weekly"
+                                                   <?php echo ($reminderPreferences['reminder_frequency'] ?? 'daily') === 'weekly' ? 'checked' : ''; ?>>
+                                            <span>Weekly</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="reminder_frequency" value="never"
+                                                   <?php echo ($reminderPreferences['reminder_frequency'] ?? 'daily') === 'never' ? 'checked' : ''; ?>>
+                                            <span>Never</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="settings-section">
+                                    <h3 class="settings-section-title">Preferred Categories</h3>
+                                    <p class="settings-help-text">Select categories you want reminders for (leave empty for all categories)</p>
+                                    <div class="category-checkboxes">
+                                        <?php 
+                                        $selectedCategories = $reminderPreferences['preferred_categories'] ?? null;
+                                        foreach ($categories as $catId => $catName): 
+                                            if ($catId === 'all') continue;
+                                            $isChecked = $selectedCategories === null || in_array($catId, $selectedCategories);
+                                        ?>
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="preferred_categories[]" value="<?php echo $catId; ?>"
+                                                       <?php echo $isChecked ? 'checked' : ''; ?>>
+                                                <span><?php echo htmlspecialchars($catName); ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="settings-section">
+                                    <h3 class="settings-section-title">Reminder Time</h3>
+                                    <div class="form-group">
+                                        <input type="time" name="reminder_time" 
+                                               value="<?php 
+                                                   $timeValue = $reminderPreferences['reminder_time'] ?? '09:00:00';
+                                                   // HTML time input only accepts HH:MM format, so strip seconds if present
+                                                   echo htmlspecialchars(substr($timeValue, 0, 5)); 
+                                               ?>" 
+                                               class="form-control">
+                                        <small class="form-help">Choose your preferred time to receive reminders</small>
+                                    </div>
+                                </div>
+
+                                <div class="settings-section">
+                                    <h3 class="settings-section-title">Notification Preferences</h3>
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="email_reminders_enabled" value="1"
+                                                   <?php echo ($reminderPreferences['email_reminders_enabled'] ?? 0) ? 'checked' : ''; ?>>
+                                            <span>Enable Email Reminders</span>
+                                        </label>
+                                        <small class="form-help">Receive reminders via email (coming soon)</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <small class="form-help" style="color: var(--muted-foreground);">
+                                            <i class="fas fa-info-circle"></i> 
+                                            Reminders will appear as notifications in the top-right corner of the page.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i>
+                                        Save Preferences
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     <?php endif; ?>
                 </section>
 
@@ -461,7 +602,12 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? 'uploads/placeholder_avatar.j
     <script src="../js/main.js"></script>
     <script src="../js/cart_count.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/notifications.js"></script>
     <script src="../js/profile.js"></script>
+    <script src="../js/wellness_chatbot.js"></script>
+    <?php if ($activeTab === 'settings' || $activeTab === 'reminders'): ?>
+    <script src="../js/reminder_preferences.js"></script>
+    <?php endif; ?>
 </body>
 </html>
 

@@ -186,7 +186,117 @@
     width: 100%;
 }
 
-/* Live Chat Support */
+/* Quick Help Section */
+.quick-help-wrapper {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.quick-help-header {
+    margin-bottom: 1.5rem;
+}
+
+.quick-help-subtitle {
+    color: #6b7280;
+    font-size: 0.9375rem;
+    margin-top: 0.5rem;
+}
+
+.quick-help-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.quick-help-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.quick-help-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+}
+
+.quick-help-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7FB685, #6FA375);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.quick-help-info {
+    flex: 1;
+}
+
+.quick-help-info h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2C3E35;
+    margin-bottom: 0.5rem;
+}
+
+.quick-help-info p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.quick-help-btn {
+    background: #7FB685;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.quick-help-btn:hover {
+    background: #6FA375;
+    transform: translateX(4px);
+    color: white;
+}
+
+.quick-help-btn i {
+    font-size: 0.75rem;
+}
+
+/* Smooth scroll for anchor links */
+html {
+    scroll-behavior: smooth;
+}
+
+/* FAQ Section anchor offset for fixed header */
+#faq-section {
+    scroll-margin-top: 100px;
+}
+
+/* Live Chat Support (deprecated - keeping for reference) */
 .live-chat-wrapper {
     background: var(--card);
     border-radius: 0.75rem;

@@ -27,7 +27,7 @@ class wishlist_class extends db_connection
         }
         
         // Check if product exists
-        $product_sql = "SELECT product_id FROM products WHERE product_id = $product_id LIMIT 1";
+        $product_sql = "SELECT product_id FROM customer_products WHERE product_id = $product_id LIMIT 1";
         $product = $this->db_fetch_one($product_sql);
         
         if (!$product || !is_array($product) || empty($product['product_id'])) {
@@ -205,7 +205,7 @@ class wishlist_class extends db_connection
         $sql = "SELECT pl.product_id, pl.created_at,
                        p.product_title, p.product_price, p.product_image
                 FROM product_likes pl
-                INNER JOIN products p ON pl.product_id = p.product_id
+                INNER JOIN customer_products p ON pl.product_id = p.product_id
                 WHERE pl.customer_id = $customer_id
                 ORDER BY pl.created_at DESC";
         

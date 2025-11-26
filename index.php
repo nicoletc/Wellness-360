@@ -9,6 +9,7 @@ require_once 'Functions/get_cart_count.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wellness 360 - Home</title>
     <link rel="stylesheet" href="Css/style.css">
+    <link rel="stylesheet" href="Css/notifications.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
@@ -58,25 +59,6 @@ require_once 'Functions/get_cart_count.php';
         </div>
     </header>
 
-    <?php if (is_logged_in()): ?>
-        <!-- Daily Reminder Banner -->
-        <div id="daily-reminder-banner" class="daily-reminder-banner" style="display: none;">
-            <div class="container">
-                <div class="reminder-content">
-                    <button class="reminder-close" onclick="closeDailyReminder()" aria-label="Close reminder">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="reminder-icon">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <div class="reminder-text">
-                        <h3 class="reminder-title" id="reminder-title">Daily Wellness Reminder</h3>
-                        <p class="reminder-message" id="reminder-message">Loading your personalized reminder...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
 
     <?php
     // Include image paths and features from home_data.php first
@@ -414,9 +396,9 @@ require_once 'Functions/get_cart_count.php';
                 <div class="footer-section">
                     <h4>Contact Us</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> info@wellness360.com</li>
-                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Wellness St, Health City</li>
+                        <li><i class="fas fa-envelope"></i> wellnessallround@gmail.com</li>
+                        <li><i class="fas fa-phone"></i> 0204567321</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 3rd Circular rd, Tema</li>
                     </ul>
                 </div>
             </div>
@@ -427,52 +409,144 @@ require_once 'Functions/get_cart_count.php';
     </footer>
 
     <script src="js/main.js"></script>
+    <script src="js/notifications.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/cart.js"></script>
     
     <?php if (is_logged_in()): ?>
     <script>
-    // Daily Reminder System
+    // Daily Reminder System - Show at scheduled time
+    let reminderCheckInterval = null;
+    
     async function loadDailyReminder() {
         try {
+            // First, get user preferences to check reminder time
+            const prefsResponse = await fetch('Actions/get_reminder_preferences_action.php');
+            const prefsResult = await prefsResponse.json();
+            
+            if (!prefsResult.status || !prefsResult.preferences) {
+                return; // No preferences found
+            }
+            
+            const preferences = prefsResult.preferences;
+            
+            // Check if reminders are enabled
+            if (preferences.reminder_frequency === 'never') {
+                return; // Reminders disabled
+            }
+            
+            // Check frequency
+            if (preferences.reminder_frequency === 'weekly') {
+                const dayOfWeek = new Date().getDay(); // 0 = Sunday, 1 = Monday
+                if (dayOfWeek !== 1) {
+                    return; // Not Monday, skip
+                }
+            }
+            
+            // Get reminder time (format: HH:MM:SS) - MUST be defined before using it
+            const reminderTime = preferences.reminder_time || '09:00:00';
+            
+            // Check if reminder was already shown today (but allow if time has passed and we're checking again)
+            const today = new Date().toDateString();
+            const lastShownDate = localStorage.getItem('reminder_last_shown_date');
+            const lastShownTime = localStorage.getItem('reminder_last_shown_time');
+            
+            // If already shown today, check if we should show again (e.g., if user changed time)
+            if (lastShownDate === today && lastShownTime) {
+                // Only skip if the reminder time hasn't changed
+                if (lastShownTime === reminderTime) {
+                    console.log('[Reminder] Already shown today at', lastShownTime);
+                    return; // Already shown today with same time
+                } else {
+                    console.log('[Reminder] Time changed from', lastShownTime, 'to', reminderTime, '- will show again');
+                    // Clear the old record to allow showing again
+                    localStorage.removeItem('reminder_last_shown_date');
+                    localStorage.removeItem('reminder_last_shown_time');
+                }
+            }
+            const [hours, minutes] = reminderTime.split(':').map(Number);
+            
+            // Get current time
+            const now = new Date();
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
+            
+            // Calculate time in minutes for comparison
+            const reminderMinutes = hours * 60 + minutes;
+            const currentMinutesTotal = currentHours * 60 + currentMinutes;
+            
+            // Only show if current time is at or past reminder time
+            if (currentMinutesTotal < reminderMinutes) {
+                // Not time yet, set up a timer to check again
+                const minutesUntilReminder = reminderMinutes - currentMinutesTotal;
+                const msUntilReminder = minutesUntilReminder * 60 * 1000;
+                
+                console.log(`[Reminder] Scheduled for ${reminderTime}. Current time: ${currentHours}:${String(currentMinutes).padStart(2, '0')}. Will check again in ${minutesUntilReminder} minutes.`);
+                
+                // Set up interval to check every minute
+                if (reminderCheckInterval) {
+                    clearInterval(reminderCheckInterval);
+                }
+                
+                // Set up interval to check every minute (more reliable than setTimeout)
+                reminderCheckInterval = setInterval(checkReminderTime, 60000); // Check every minute
+                
+                // Also set a timeout for the exact time as backup
+                setTimeout(function() {
+                    console.log('[Reminder] Timeout reached, checking reminder...');
+                    checkReminderTime();
+                }, msUntilReminder);
+                
+                return;
+            }
+            
+            // Time has passed, fetch and show reminder
+            console.log(`[Reminder] Time has passed (${currentHours}:${String(currentMinutes).padStart(2, '0')} >= ${reminderTime}). Fetching reminder...`);
             const response = await fetch('Actions/get_daily_reminder_action.php');
             const result = await response.json();
             
+            console.log('[Reminder] Response:', result);
+            
             if (result.status && result.reminder) {
                 const reminder = result.reminder;
-                const banner = document.getElementById('daily-reminder-banner');
-                const titleEl = document.getElementById('reminder-title');
-                const messageEl = document.getElementById('reminder-message');
+                const title = reminder.title || 'Daily Wellness Reminder';
+                const message = reminder.message || 'Stay motivated on your wellness journey!';
                 
-                if (banner && titleEl && messageEl) {
-                    titleEl.textContent = reminder.title || 'Daily Wellness Reminder';
-                    messageEl.textContent = reminder.message || 'Stay motivated on your wellness journey!';
-                    
-                    // Show banner with animation
-                    banner.style.display = 'block';
-                    setTimeout(() => {
-                        banner.classList.add('show');
-                    }, 100);
-                    
-                    // Mark as read when displayed
-                    if (reminder.id && !reminder.is_read) {
-                        markReminderAsRead(reminder.id);
-                    }
+                console.log(`[Reminder] Showing reminder: ${title}`);
+                
+                // Show as in-page notification in top-right corner (20 seconds)
+                if (window.notifications) {
+                    window.notifications.info(`<strong>${title}</strong><br>${message}`, 20000);
+                } else {
+                    console.warn('[Reminder] Notification system not available');
                 }
+                
+                // Mark as shown today with the reminder time
+                localStorage.setItem('reminder_last_shown_date', today);
+                localStorage.setItem('reminder_last_shown_time', reminderTime);
+                
+                // Mark as read when displayed
+                if (reminder.id && !reminder.is_read) {
+                    markReminderAsRead(reminder.id);
+                }
+                
+                // Clear interval since reminder was shown
+                if (reminderCheckInterval) {
+                    clearInterval(reminderCheckInterval);
+                    reminderCheckInterval = null;
+                }
+            } else {
+                console.log('[Reminder] No reminder available:', result.message || 'Unknown reason');
             }
         } catch (error) {
             console.error('Error loading daily reminder:', error);
         }
     }
     
-    function closeDailyReminder() {
-        const banner = document.getElementById('daily-reminder-banner');
-        if (banner) {
-            banner.classList.remove('show');
-            setTimeout(() => {
-                banner.style.display = 'none';
-            }, 300);
-        }
+    function checkReminderTime() {
+        // Re-check if it's time to show reminder
+        console.log('[Reminder] Checking if it\'s time for reminder...');
+        loadDailyReminder();
     }
     
     async function markReminderAsRead(reminderId) {
@@ -489,13 +563,29 @@ require_once 'Functions/get_cart_count.php';
         }
     }
     
-    // Load reminder when page loads (only for logged-in users)
+    // Load reminder when page loads
     document.addEventListener('DOMContentLoaded', function() {
-        // Delay slightly to let page render first
-        setTimeout(loadDailyReminder, 500);
+        console.log('[Reminder] System initialized');
+        setTimeout(loadDailyReminder, 1000);
+    });
+    
+    // Also check when page becomes visible (user switches back to tab)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            console.log('[Reminder] Page became visible, checking reminder...');
+            loadDailyReminder();
+        }
+    });
+    
+    // Clean up interval when page unloads
+    window.addEventListener('beforeunload', function() {
+        if (reminderCheckInterval) {
+            clearInterval(reminderCheckInterval);
+        }
     });
     </script>
     <?php endif; ?>
+    <script src="js/wellness_chatbot.js"></script>
 </body>
 </html>
 

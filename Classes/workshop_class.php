@@ -147,7 +147,7 @@ class workshop_class extends db_connection
                        c.customer_email,
                        COUNT(r.registration_id) AS registered_count
                 FROM workshops w
-                LEFT JOIN customer c ON w.customer_id = c.customer_id
+                LEFT JOIN customers c ON w.customer_id = c.customer_id
                 LEFT JOIN workshop_registrations r ON w.workshop_id = r.workshop_id AND r.status = 'registered'
                 GROUP BY w.workshop_id, w.customer_id, w.workshop_title, w.workshop_image, w.workshop_desc, 
                          w.workshop_leader, w.workshop_date, w.workshop_time, w.workshop_type, w.location, 
@@ -168,7 +168,7 @@ class workshop_class extends db_connection
                        c.customer_name,
                        c.customer_email
                 FROM workshops w
-                LEFT JOIN customer c ON w.customer_id = c.customer_id
+                LEFT JOIN customers c ON w.customer_id = c.customer_id
                 WHERE w.workshop_id = $workshop_id";
         
         return $this->db_fetch_one($sql);

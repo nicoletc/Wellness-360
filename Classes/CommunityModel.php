@@ -34,7 +34,7 @@ class CommunityModel extends db_connection {
         ];
         
         // Get active members count (total customers)
-        $members_sql = "SELECT COUNT(*) as count FROM customer";
+        $members_sql = "SELECT COUNT(*) as count FROM customers";
         $members_result = $this->db_fetch_one($members_sql);
         if ($members_result && isset($members_result['count'])) {
             $stats['activeMembers'] = (int)$members_result['count'];
@@ -136,7 +136,7 @@ class CommunityModel extends db_connection {
         }
         
         $sql .= " FROM workshops w
-                LEFT JOIN customer c ON w.customer_id = c.customer_id
+                LEFT JOIN customers c ON w.customer_id = c.customer_id
                 LEFT JOIN workshop_registrations r ON w.workshop_id = r.workshop_id AND r.status = 'registered'
                 GROUP BY w.workshop_id, w.customer_id, w.workshop_title, w.workshop_image, w.workshop_desc, 
                          w.workshop_leader, w.workshop_date, w.workshop_time, w.workshop_type, w.location, 

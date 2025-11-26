@@ -78,7 +78,7 @@ class category_class extends db_connection
         $sql = "SELECT c.*, 
                 COALESCE(COUNT(p.product_id), 0) as product_count
                 FROM category c
-                LEFT JOIN products p ON c.cat_id = p.product_cat
+                LEFT JOIN customer_products p ON c.cat_id = p.product_cat
                 GROUP BY c.cat_id
                 ORDER BY c.cat_name ASC";
         return $this->db_fetch_all($sql);
@@ -204,7 +204,7 @@ class category_class extends db_connection
         }
 
         // Check if category is being used by products
-        $check_products = "SELECT COUNT(*) as count FROM products WHERE product_cat = $cat_id";
+        $check_products = "SELECT COUNT(*) as count FROM customer_products WHERE product_cat = $cat_id";
         $product_count = $this->db_fetch_one($check_products);
         
         if ($product_count && $product_count['count'] > 0) {

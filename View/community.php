@@ -451,9 +451,9 @@ if (!empty($discussions)) {
                 <div class="footer-section">
                     <h4>Contact Us</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> info@wellness360.com</li>
-                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Wellness St, Health City</li>
+                        <li><i class="fas fa-envelope"></i> wellnessallround@gmail.com</li>
+                        <li><i class="fas fa-phone"></i> 0204567321</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 3rd Circular rd, Tema</li>
                     </ul>
                 </div>
             </div>
@@ -464,6 +464,7 @@ if (!empty($discussions)) {
     </footer>
 
     <script src="../js/main.js"></script>
+    <script src="../js/wellness_chatbot.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/workshop_registration.js"></script>
     <script src="../js/cart_count.js"></script>

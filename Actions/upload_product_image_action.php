@@ -112,7 +112,7 @@ try {
         exit;
     }
     
-    $sql = "UPDATE products SET product_image = '$relativeEscaped' WHERE product_id = $productIdEscaped";
+    $sql = "UPDATE customer_products SET product_image = '$relativeEscaped' WHERE product_id = $productIdEscaped";
     $result = $db->db_query($sql);
     
     if ($result) {

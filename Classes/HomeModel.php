@@ -69,8 +69,8 @@ class HomeModel extends db_connection
         $sql = "SELECT p.product_id, p.product_title, p.product_price, p.product_image,
                        v.vendor_name,
                        SUM(od.qty) as total_quantity_sold
-                FROM products p
-                LEFT JOIN orderdetails od ON p.product_id = od.product_id
+                FROM customer_products p
+                LEFT JOIN order_details od ON p.product_id = od.product_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 GROUP BY p.product_id, p.product_title, p.product_price, p.product_image, v.vendor_name
                 HAVING total_quantity_sold > 0
@@ -87,7 +87,7 @@ class HomeModel extends db_connection
             // If no products have been sold yet, get products by date_added
             $fallback_sql = "SELECT p.product_id, p.product_title, p.product_price, p.product_image,
                                     v.vendor_name
-                             FROM products p
+                             FROM customer_products p
                              LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                              ORDER BY p.date_added DESC
                              LIMIT " . (int)$limit;

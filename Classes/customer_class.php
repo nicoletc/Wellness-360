@@ -45,7 +45,7 @@ class customer_class extends db_connection
         $user_role = (int)$data['user_role'];
 
         // Prepare SQL query
-        $sql = "INSERT INTO customer (customer_name, customer_email, customer_pass, customer_contact, user_role, date_joined) 
+        $sql = "INSERT INTO customers (customer_name, customer_email, customer_pass, customer_contact, user_role, date_joined) 
                 VALUES ('$name', '$email', '$hashed_password', '$contact', $user_role, NOW())";
 
         // Execute query
@@ -71,7 +71,7 @@ class customer_class extends db_connection
     public function check_email($email)
     {
         $email = $this->escape_string($email);
-        $sql = "SELECT customer_id FROM customer WHERE customer_email = '$email'";
+        $sql = "SELECT customer_id FROM customers WHERE customer_email = '$email'";
         
         $result = $this->db_fetch_one($sql);
         
@@ -96,7 +96,7 @@ class customer_class extends db_connection
     public function get_customer_by_email($email)
     {
         $email = $this->escape_string($email);
-        $sql = "SELECT * FROM customer WHERE customer_email = '$email'";
+        $sql = "SELECT * FROM customers WHERE customer_email = '$email'";
         
         return $this->db_fetch_one($sql);
     }
@@ -145,7 +145,7 @@ class customer_class extends db_connection
     {
         $customer_id = (int)$customer_id;
         $sql = "SELECT customer_id, customer_name, customer_email, customer_contact, customer_image, user_role, date_joined 
-                FROM customer WHERE customer_id = $customer_id";
+                FROM customers WHERE customer_id = $customer_id";
         
         return $this->db_fetch_one($sql);
     }
@@ -184,7 +184,7 @@ class customer_class extends db_connection
             ];
         }
 
-        $sql = "UPDATE customer SET " . implode(', ', $updates) . " WHERE customer_id = $customer_id";
+        $sql = "UPDATE customers SET " . implode(', ', $updates) . " WHERE customer_id = $customer_id";
 
         if ($this->db_write_query($sql)) {
             return [
@@ -207,7 +207,7 @@ class customer_class extends db_connection
     public function delete($customer_id)
     {
         $customer_id = (int)$customer_id;
-        $sql = "DELETE FROM customer WHERE customer_id = $customer_id";
+        $sql = "DELETE FROM customers WHERE customer_id = $customer_id";
 
         if ($this->db_write_query($sql)) {
             return [

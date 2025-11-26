@@ -95,7 +95,7 @@ class product_class extends db_connection
         }
 
         // Insert product
-        $sql = "INSERT INTO products (product_cat, product_vendor, product_title, product_price, product_desc, product_image, product_keywords, stock) 
+        $sql = "INSERT INTO customer_products (product_cat, product_vendor, product_title, product_price, product_desc, product_image, product_keywords, stock) 
                 VALUES ($product_cat, $product_vendor, '$product_title', $product_price, '$product_desc', '$product_image', '$product_keywords', $stock)";
         $result = $this->db_query($sql);
 
@@ -120,7 +120,7 @@ class product_class extends db_connection
     public function get_all()
     {
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 ORDER BY p.date_added DESC";
@@ -136,7 +136,7 @@ class product_class extends db_connection
     {
         $product_id = (int)$product_id;
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 WHERE p.product_id = $product_id";
@@ -247,7 +247,7 @@ class product_class extends db_connection
         }
 
         // Update product (always update image if provided, even if empty string to clear it)
-        $sql = "UPDATE products 
+        $sql = "UPDATE customer_products 
                 SET product_cat = $product_cat, 
                     product_vendor = $product_vendor, 
                     product_title = '$product_title', 
@@ -292,7 +292,7 @@ class product_class extends db_connection
         }
 
         // Check if product is in any orders
-        $check_orders = "SELECT COUNT(*) as count FROM orderdetails WHERE product_id = $product_id";
+        $check_orders = "SELECT COUNT(*) as count FROM order_details WHERE product_id = $product_id";
         $order_count = $this->db_fetch_one($check_orders);
         
         if ($order_count && $order_count['count'] > 0) {
@@ -303,7 +303,7 @@ class product_class extends db_connection
         }
 
         // Check if product is in any carts
-        $check_cart = "SELECT COUNT(*) as count FROM cart WHERE p_id = $product_id";
+        $check_cart = "SELECT COUNT(*) as count FROM carts WHERE p_id = $product_id";
         $cart_count = $this->db_fetch_one($check_cart);
         
         if ($cart_count && $cart_count['count'] > 0) {
@@ -314,7 +314,7 @@ class product_class extends db_connection
         }
 
         // Delete product
-        $sql = "DELETE FROM products WHERE product_id = $product_id";
+        $sql = "DELETE FROM customer_products WHERE product_id = $product_id";
         $result = $this->db_query($sql);
 
         if ($result) {

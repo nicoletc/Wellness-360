@@ -28,7 +28,7 @@ $quickActions = $data['quickActions'] ?? [];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact & Support - Wellness 360</title>
     <link rel="stylesheet" href="../Css/style.css">
-    <link rel="stylesheet" href="../Css/contact.css">
+    <link rel="stylesheet" href="../Css/contact.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
@@ -118,8 +118,9 @@ $quickActions = $data['quickActions'] ?? [];
             <div class="contact-form-chat-grid">
                 <!-- Contact Form -->
                 <div class="contact-form-wrapper">
-                    <h2 class="section-form-title">Send Us a Message</h2>
+                    <h2 class="section-form-title">Tell us about your experience</h2>
                     <form method="POST" action="" class="contact-form" id="contactForm">
+                        <div id="contactFormMessage" style="display: none; margin-bottom: 1rem; padding: 1rem; border-radius: 8px;"></div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstName">Your first name</label>
@@ -153,32 +154,49 @@ $quickActions = $data['quickActions'] ?? [];
                     </form>
                 </div>
 
-                <!-- Live Chat Support -->
-                <div class="live-chat-wrapper">
-                    <div class="chat-header">
-                        <h2 class="section-form-title">Live Chat Support</h2>
-                        <div class="chat-status">
-                            <span class="status-dot"></span>
-                            <span>Online</span>
-                        </div>
+                <!-- Quick Help Section -->
+                <div class="quick-help-wrapper">
+                    <div class="quick-help-header">
+                        <h2 class="section-form-title">Quick Help</h2>
+                        <p class="quick-help-subtitle">Find answers to common questions</p>
                     </div>
-                    <div class="chat-messages" id="chatMessages">
-                        <?php foreach ($chatMessages as $chat): ?>
-                            <div class="chat-message chat-message-<?php echo $chat['sender']; ?>">
-                                <p><?php echo htmlspecialchars($chat['message']); ?></p>
+                    <div class="quick-help-content">
+                        <div class="quick-help-item">
+                            <div class="quick-help-icon">
+                                <i class="fas fa-robot"></i>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="chat-quick-actions">
-                        <?php foreach ($quickActions as $action): ?>
-                            <button type="button" class="quick-action-btn"><?php echo htmlspecialchars($action); ?></button>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="chat-input-wrapper">
-                        <input type="text" class="chat-input" placeholder="Type your message...">
-                        <button type="button" class="chat-send-btn">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                            <div class="quick-help-info">
+                                <h3>AI Wellness Assistant</h3>
+                                <p>Chat with our AI assistant for instant answers about wellness, products, and services.</p>
+                                <button type="button" class="quick-help-btn" onclick="document.getElementById('wellnessChatbotToggle')?.click();">
+                                    Start Chat <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="quick-help-item">
+                            <div class="quick-help-icon">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <div class="quick-help-info">
+                                <h3>Frequently Asked Questions</h3>
+                                <p>Browse our FAQ section below for answers to the most common questions.</p>
+                                <a href="#faq-section" class="quick-help-btn">
+                                    View FAQs <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="quick-help-item">
+                            <div class="quick-help-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="quick-help-info">
+                                <h3>Wellness Resources</h3>
+                                <p>Explore our Wellness Hub for articles, guides, and expert advice on health and wellness.</p>
+                                <a href="wellness_hub.php" class="quick-help-btn">
+                                    Visit Hub <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -186,7 +204,7 @@ $quickActions = $data['quickActions'] ?? [];
     </section>
 
     <!-- FAQ Section -->
-    <section class="faq-section">
+    <section id="faq-section" class="faq-section">
         <div class="container">
             <div class="faq-header">
                 <div class="faq-icon-wrapper">
@@ -278,9 +296,9 @@ $quickActions = $data['quickActions'] ?? [];
                 <div class="footer-section">
                     <h4>Stay Connected</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> hello@wellness360.gh</li>
-                        <li><i class="fas fa-phone"></i> +233 20 123 4567</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Accra, Ghana</li>
+                        <li><i class="fas fa-envelope"></i> wellnessallround@gmail.com</li>
+                        <li><i class="fas fa-phone"></i> 0204567321</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 3rd Circular rd, Tema</li>
                     </ul>
                     <div class="newsletter-section">
                         <p>Subscribe to our newsletter</p>
@@ -298,7 +316,101 @@ $quickActions = $data['quickActions'] ?? [];
     </footer>
 
     <script src="../js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/wellness_chatbot.js"></script>
     <script>
+    // Contact Form Submission
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const submitBtn = form.querySelector('.contact-submit-btn');
+        const messageDiv = document.getElementById('contactFormMessage');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        // Disable button and show loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        messageDiv.style.display = 'none';
+        
+        // Get form data
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('../Actions/submit_contact_message_action.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.status) {
+                // Show success message with Sweet Alert
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Message Sent!',
+                        text: result.message || 'Your message has been sent successfully! We will get back to you soon.',
+                        timer: 4000,
+                        showConfirmButton: true,
+                        confirmButtonColor: '#7FB685'
+                    });
+                } else if (window.notifications) {
+                    window.notifications.success(result.message || 'Your message has been sent successfully!', 5000);
+                } else {
+                    messageDiv.style.display = 'block';
+                    messageDiv.style.background = '#d4edda';
+                    messageDiv.style.color = '#155724';
+                    messageDiv.style.border = '1px solid #c3e6cb';
+                    messageDiv.textContent = result.message || 'Your message has been sent successfully!';
+                }
+                
+                // Reset form
+                form.reset();
+            } else {
+                // Show error message with Sweet Alert
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message || 'Failed to send message. Please try again.',
+                        confirmButtonColor: '#7FB685'
+                    });
+                } else if (window.notifications) {
+                    window.notifications.error(result.message || 'Failed to send message. Please try again.', 5000);
+                } else {
+                    messageDiv.style.display = 'block';
+                    messageDiv.style.background = '#f8d7da';
+                    messageDiv.style.color = '#721c24';
+                    messageDiv.style.border = '1px solid #f5c6cb';
+                    messageDiv.textContent = result.message || 'Failed to send message. Please try again.';
+                }
+            }
+        } catch (error) {
+            console.error('Error submitting contact form:', error);
+            if (window.notifications) {
+                window.notifications.error('An error occurred. Please try again.', 5000);
+            } else if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred. Please try again.'
+                });
+            } else {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#f8d7da';
+                messageDiv.style.color = '#721c24';
+                messageDiv.style.border = '1px solid #f5c6cb';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+            }
+        } finally {
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+    
     // FAQ Accordion Functionality
     function toggleFaq(index) {
         const answer = document.getElementById('faqAnswer' + index);

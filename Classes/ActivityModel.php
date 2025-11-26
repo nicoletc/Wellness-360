@@ -17,13 +17,51 @@ class ActivityModel extends db_connection
     {
         $customer_id = isset($data['customer_id']) && $data['customer_id'] ? (int)$data['customer_id'] : null;
         $ip_address = $this->escape_string($data['ip_address'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
-        $activity_type = $this->escape_string($data['activity_type'] ?? 'page_view');
-        $content_type = $this->escape_string($data['content_type'] ?? 'page');
+        $activity_type_raw = $data['activity_type'] ?? 'page_view';
+        $content_type_raw = $data['content_type'] ?? 'page';
         $content_id = (int)($data['content_id'] ?? 0);
         $category_id = isset($data['category_id']) && $data['category_id'] ? (int)$data['category_id'] : null;
         $time_spent_seconds = (int)($data['time_spent_seconds'] ?? 0);
         
+        // Validate and normalize activity_type (must match ENUM values)
+        $valid_activity_types = ['article_view', 'product_view', 'page_view', 'time_spent'];
+        if (!in_array($activity_type_raw, $valid_activity_types)) {
+            // Map common variations to valid types
+            if (strpos($activity_type_raw, 'article') !== false) {
+                $activity_type = 'article_view';
+            } elseif (strpos($activity_type_raw, 'product') !== false) {
+                $activity_type = 'product_view';
+            } elseif (strpos($activity_type_raw, 'time') !== false || strpos($activity_type_raw, 'spent') !== false) {
+                $activity_type = 'time_spent';
+            } else {
+                $activity_type = 'page_view'; // Default fallback
+            }
+        } else {
+            $activity_type = $activity_type_raw;
+        }
+        $activity_type = $this->escape_string($activity_type);
+        
+        // Validate and normalize content_type (must match ENUM values)
+        $valid_content_types = ['article', 'product', 'page'];
+        if (!in_array($content_type_raw, $valid_content_types)) {
+            // Map common variations to valid types
+            if (strpos($content_type_raw, 'article') !== false) {
+                $content_type = 'article';
+            } elseif (strpos($content_type_raw, 'product') !== false) {
+                $content_type = 'product';
+            } else {
+                $content_type = 'page'; // Default fallback
+            }
+        } else {
+            $content_type = $content_type_raw;
+        }
+        $content_type = $this->escape_string($content_type);
+        
+        error_log("ActivityModel: Normalized activity_type: '$activity_type' (from '$activity_type_raw')");
+        error_log("ActivityModel: Normalized content_type: '$content_type' (from '$content_type_raw')");
+        
         if (!$this->db_connect()) {
+            error_log("ActivityModel: Database connection failed");
             return [
                 'status' => false,
                 'message' => 'Database connection failed.'
@@ -41,10 +79,17 @@ class ActivityModel extends db_connection
         $sql = "INSERT INTO user_activity (customer_id, ip_address, activity_type, content_type, content_id, category_id, time_spent_seconds, viewed_at) 
                 VALUES ($customer_sql, '$ip_address', '$activity_type', '$content_type', $content_id, $category_sql, $time_spent_seconds, NOW())";
         
+        error_log("ActivityModel: Executing SQL: " . $sql);
+        
         if ($this->db_query($sql)) {
             // Update user interests based on this activity
             if ($customer_id && $category_id) {
-                $this->updateUserInterest($customer_id, $category_id, $time_spent_seconds);
+                try {
+                    $this->updateUserInterest($customer_id, $category_id, $time_spent_seconds);
+                } catch (Exception $e) {
+                    error_log("ActivityModel: Error updating user interest - " . $e->getMessage());
+                    // Don't fail the whole operation if interest update fails
+                }
             }
             
             return [
@@ -54,6 +99,8 @@ class ActivityModel extends db_connection
             ];
         } else {
             $error = mysqli_error($this->db);
+            error_log("ActivityModel: SQL query failed - " . $error);
+            error_log("ActivityModel: SQL was - " . $sql);
             return [
                 'status' => false,
                 'message' => 'Failed to record activity: ' . $error
@@ -69,16 +116,27 @@ class ActivityModel extends db_connection
      */
     private function getCategoryFromContent($content_type, $content_id)
     {
-        if ($content_type === 'article') {
-            $sql = "SELECT article_cat FROM articles WHERE article_id = " . (int)$content_id;
-        } elseif ($content_type === 'product') {
-            $sql = "SELECT product_cat FROM products WHERE product_id = " . (int)$content_id;
-        } else {
+        if (!$this->db_connect()) {
+            error_log("ActivityModel: Database connection failed in getCategoryFromContent");
             return null;
         }
         
-        $result = $this->db_fetch_one($sql);
-        return $result ? (int)$result[$content_type . '_cat'] : null;
+        try {
+            if ($content_type === 'article') {
+                $sql = "SELECT article_cat FROM articles WHERE article_id = " . (int)$content_id;
+                $result = $this->db_fetch_one($sql);
+                return ($result && isset($result['article_cat'])) ? (int)$result['article_cat'] : null;
+            } elseif ($content_type === 'product') {
+                $sql = "SELECT product_cat FROM customer_products WHERE product_id = " . (int)$content_id;
+                $result = $this->db_fetch_one($sql);
+                return ($result && isset($result['product_cat'])) ? (int)$result['product_cat'] : null;
+            } else {
+                return null;
+            }
+        } catch (Exception $e) {
+            error_log("ActivityModel: Error in getCategoryFromContent - " . $e->getMessage());
+            return null;
+        }
     }
     
     /**

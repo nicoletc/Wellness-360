@@ -155,8 +155,8 @@ The reminder banner is in `index.php`. You can move it or add it to other pages 
 ## Next Steps (Optional Enhancements)
 
 1. **Email Reminders** - Send daily reminders via email
-2. **Push Notifications** - Browser push notifications for reminders
-3. **Reminder Preferences** - Let users choose reminder frequency/categories
-4. **Reminder History** - Show past reminders in profile
-5. **Multiple Reminders** - Allow multiple reminders per day (morning, afternoon, evening)
+2. **Reminder Preferences** - Let users choose reminder frequency/categories ✅ (Already implemented)
+3. **Reminder History** - Show past reminders in profile ✅ (Already implemented)
+4. **Multiple Reminders** - Allow multiple reminders per day (morning, afternoon, evening)
+5. **Notification Customization** - Allow users to customize notification appearance and duration
 

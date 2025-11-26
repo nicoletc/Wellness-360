@@ -198,7 +198,14 @@ function handleUpdatePdfPreview(e) {
  */
 async function uploadArticlePdf(file, articleId = 0) {
     if (!file) {
-        return { status: 'success', path: '' };
+        return { status: true, path: '' };
+    }
+
+    if (!articleId || articleId <= 0) {
+        return {
+            status: false,
+            message: 'Invalid article ID. Cannot upload PDF.'
+        };
     }
 
     const formData = new FormData();
@@ -211,25 +218,54 @@ async function uploadArticlePdf(file, articleId = 0) {
             body: formData
         });
 
-        const result = await response.json();
-        
-        // Convert response format to match our expected format
-        if (result.status === 'success') {
-            return {
-                status: true,
-                pdf_path: result.path
-            };
-        } else {
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('PDF upload HTTP error:', response.status, errorText);
             return {
                 status: false,
-                message: result.message || 'Failed to upload PDF.'
+                message: `Server error (${response.status}). ${errorText || 'Failed to upload PDF.'}`
+            };
+        }
+
+        let result;
+        try {
+            const responseText = await response.text();
+            console.log('PDF upload raw response:', responseText);
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('PDF upload JSON parse error:', parseError);
+            return {
+                status: false,
+                message: 'Invalid response from server. Please check server logs.'
+            };
+        }
+        
+        console.log('PDF upload parsed response:', result);
+        
+        // Check response format - handle both 'success' string and true boolean
+        const isSuccess = result.status === 'success' || result.status === true;
+        
+        if (isSuccess) {
+            return {
+                status: true,
+                pdf_path: result.path || '',
+                pdf_size: result.pdf_size || 0
+            };
+        } else {
+            // Error from server
+            const errorMsg = result.message || 'Failed to upload PDF to database.';
+            console.error('PDF upload failed:', errorMsg, result);
+            return {
+                status: false,
+                message: errorMsg
             };
         }
     } catch (error) {
-        console.error('PDF upload error:', error);
+        console.error('PDF upload network error:', error);
         return {
             status: false,
-            message: 'Failed to upload PDF. Please try again.'
+            message: `Network error: ${error.message || 'Failed to upload PDF. Please check your connection and try again.'}`
         };
     }
 }
@@ -280,23 +316,59 @@ async function handleAddArticle(e) {
         }
 
         const articleId = addResult.article_id;
+        
+        // Small delay to ensure article is fully committed to database
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Track PDF upload status
+        let pdfUploadSuccess = false;
+        let pdfUploadError = null;
 
         // Upload PDF if provided (PDF binary data is stored directly in database)
         if (pdfFile) {
-            const uploadResult = await uploadArticlePdf(pdfFile, articleId);
-            if (!uploadResult.status) {
-                // Article was added but PDF upload failed
+            // Check file size before uploading (max 10MB)
+            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            if (pdfFile.size > maxSize) {
+                pdfUploadError = {
+                    type: 'size',
+                    message: `File too large: ${(pdfFile.size / 1024 / 1024).toFixed(2)} MB (Maximum: 10 MB)`
+                };
+            } else {
+                try {
+                    const uploadResult = await uploadArticlePdf(pdfFile, articleId);
+                    if (uploadResult.status) {
+                        pdfUploadSuccess = true;
+                        console.log('PDF uploaded successfully. Size:', uploadResult.pdf_size, 'bytes');
+                    } else {
+                        pdfUploadError = {
+                            type: 'upload',
+                            message: uploadResult.message || 'Unknown error'
+                        };
+                    }
+                } catch (uploadError) {
+                    pdfUploadError = {
+                        type: 'network',
+                        message: uploadError.message || 'Network error or file processing failed'
+                    };
+                }
+            }
+            
+            // Show warning if PDF upload failed (but don't await - let it show in background)
+            if (pdfUploadError) {
+                // Show warning but don't block execution
                 Swal.fire({
                     icon: 'warning',
                     title: 'Article Added',
-                    text: 'Article added but PDF upload failed: ' + (uploadResult.message || 'Unknown error'),
-                    confirmButtonColor: '#7FB685'
+                    html: `Article created successfully, but PDF upload failed:<br><br>
+                           <strong>Error:</strong> ${pdfUploadError.message}<br><br>
+                           The article exists in the database but the PDF was not saved. You can try uploading the PDF again by editing the article.`,
+                    confirmButtonColor: '#7FB685',
+                    confirmButtonText: 'OK'
                 });
             }
-            // Note: PDF binary data is automatically saved to database in upload_article_pdf_action.php
         }
 
-        // Reset button state
+        // Reset button state IMMEDIATELY after PDF upload attempt
         if (btnText) btnText.style.display = 'inline';
         if (btnLoader) btnLoader.style.display = 'none';
         submitBtn.disabled = false;
@@ -304,12 +376,20 @@ async function handleAddArticle(e) {
         // Close modal and show success
         closeAddModal();
         
+        // Determine success message based on PDF upload status
+        let successMessage = addResult.message || 'Article added successfully.';
+        if (pdfFile && pdfUploadSuccess) {
+            successMessage += ' PDF uploaded successfully.';
+        } else if (pdfFile && !pdfUploadSuccess) {
+            // Error message already shown above, just show basic success
+        }
+        
         Swal.fire({
             icon: 'success',
             title: 'Success!',
-            text: addResult.message || 'Article added successfully.',
+            text: successMessage,
             confirmButtonColor: '#7FB685',
-            timer: 1500,
+            timer: 2000,
             showConfirmButton: false
         }).then(() => {
             form.reset();
@@ -320,9 +400,12 @@ async function handleAddArticle(e) {
 
     } catch (error) {
         console.error('Add article error:', error);
+        
+        // ALWAYS reset button state on error
         if (btnText) btnText.style.display = 'inline';
         if (btnLoader) btnLoader.style.display = 'none';
-        submitBtn.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+        
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -360,19 +443,59 @@ async function handleUpdateArticle(e) {
     if (btnLoader) btnLoader.style.display = 'inline-block';
     submitBtn.disabled = true;
 
+    // Track PDF upload status
+    let pdfUploadSuccess = false;
+    let pdfUploadError = null;
+
     try {
         // Upload new PDF if provided (PDF binary data is stored directly in database)
         if (pdfFile) {
-            const uploadResult = await uploadArticlePdf(pdfFile, articleId);
-            if (!uploadResult.status) {
-                Swal.fire({
+            console.log('Update: PDF file selected. Size:', pdfFile.size, 'bytes, Article ID:', articleId);
+            
+            // Check file size before uploading (max 10MB)
+            const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            if (pdfFile.size > maxSize) {
+                pdfUploadError = {
+                    type: 'size',
+                    message: `File too large: ${(pdfFile.size / 1024 / 1024).toFixed(2)} MB (Maximum: 10 MB)`
+                };
+            } else {
+                try {
+                    console.log('Update: Attempting PDF upload for article ID:', articleId);
+                    const uploadResult = await uploadArticlePdf(pdfFile, articleId);
+                    console.log('Update: PDF upload result:', uploadResult);
+                    
+                    if (uploadResult.status) {
+                        pdfUploadSuccess = true;
+                        console.log('Update: PDF uploaded successfully. Size:', uploadResult.pdf_size, 'bytes');
+                    } else {
+                        pdfUploadError = {
+                            type: 'upload',
+                            message: uploadResult.message || 'Unknown error'
+                        };
+                        console.error('Update: PDF upload failed:', pdfUploadError.message);
+                    }
+                } catch (uploadError) {
+                    pdfUploadError = {
+                        type: 'network',
+                        message: uploadError.message || 'Network error or file processing failed'
+                    };
+                    console.error('Update: PDF upload exception:', uploadError);
+                }
+            }
+            
+            // Show error if PDF upload failed
+            if (pdfUploadError) {
+                await Swal.fire({
                     icon: 'warning',
                     title: 'PDF Upload Failed',
-                    text: uploadResult.message || 'Failed to upload new PDF. Article will be updated without changing PDF.',
-                    confirmButtonColor: '#7FB685'
+                    html: `Failed to upload PDF to database:<br><br>
+                           <strong>Error:</strong> ${pdfUploadError.message}<br><br>
+                           The article will be updated, but the PDF was not saved. You can try uploading the PDF again.`,
+                    confirmButtonColor: '#7FB685',
+                    confirmButtonText: 'OK'
                 });
             }
-            // Note: PDF binary data is automatically saved to database in upload_article_pdf_action.php
         }
 
         const formData = new FormData();
@@ -397,12 +520,21 @@ async function handleUpdateArticle(e) {
         if (result.status) {
             closeUpdateModal();
             
+            // Determine success message based on PDF upload status
+            let successMessage = result.message || 'Article updated successfully.';
+            if (pdfFile && pdfUploadSuccess) {
+                successMessage += ' PDF uploaded successfully.';
+            } else if (pdfFile && !pdfUploadSuccess && !pdfUploadError) {
+                // PDF was selected but upload wasn't attempted (shouldn't happen)
+                successMessage += ' (PDF upload status unknown)';
+            }
+            
             Swal.fire({
                 icon: 'success',
                 title: 'Success!',
-                text: result.message || 'Article updated successfully.',
+                text: successMessage,
                 confirmButtonColor: '#7FB685',
-                timer: 1500,
+                timer: 2000,
                 showConfirmButton: false
             }).then(() => {
                 loadArticles();

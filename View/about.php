@@ -239,9 +239,9 @@ $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
                 <div class="footer-section">
                     <h4>Stay Connected</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> hello@wellness360.gh</li>
-                        <li><i class="fas fa-phone"></i> +233 20 123 4567</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Accra, Ghana</li>
+                        <li><i class="fas fa-envelope"></i> wellnessallround@gmail.com</li>
+                        <li><i class="fas fa-phone"></i> 0204567321</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 3rd Circular rd, Tema</li>
                     </ul>
                     <div class="newsletter-section">
                         <p>Subscribe to our newsletter</p>
@@ -259,6 +259,7 @@ $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
     </footer>
 
     <script src="../js/main.js"></script>
+    <script src="../js/wellness_chatbot.js"></script>
     <script src="../js/cart_count.js"></script>
 </body>
 </html>

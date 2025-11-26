@@ -22,6 +22,25 @@ class ReminderModel extends db_connection
             return null;
         }
         
+        // Check user preferences
+        require_once __DIR__ . '/ReminderPreferencesModel.php';
+        $prefsModel = new ReminderPreferencesModel();
+        $preferences = $prefsModel->getPreferences($customer_id);
+        
+        // If user has disabled reminders, return null
+        if ($preferences['reminder_frequency'] === 'never') {
+            return null;
+        }
+        
+        // Check frequency (weekly reminders only on specific days)
+        if ($preferences['reminder_frequency'] === 'weekly') {
+            $dayOfWeek = date('w'); // 0 = Sunday, 1 = Monday, etc.
+            // Only show weekly reminders on Monday (1)
+            if ($dayOfWeek !== 1) {
+                return null;
+            }
+        }
+        
         $today = date('Y-m-d');
         
         // Check if reminder already exists for today
@@ -38,19 +57,29 @@ class ReminderModel extends db_connection
             return $existing;
         }
         
-        // Generate new reminder based on user interests
-        return $this->generateDailyReminder($customer_id);
+        // Generate new reminder based on user interests and preferences
+        return $this->generateDailyReminder($customer_id, $preferences);
     }
     
     /**
-     * Generate daily reminder based on user interests
+     * Generate daily reminder based on user interests and preferences
      * @param int $customer_id Customer ID
+     * @param array $preferences User preferences
      * @return array Reminder data
      */
-    private function generateDailyReminder($customer_id)
+    private function generateDailyReminder($customer_id, $preferences = null)
     {
         $activityModel = new ActivityModel();
         $topInterests = $activityModel->getUserTopInterests($customer_id, 3); // Get top 3 interests
+        
+        // Filter interests based on user preferences
+        if ($preferences && !empty($preferences['preferred_categories']) && is_array($preferences['preferred_categories'])) {
+            $preferredCategoryIds = array_map('intval', $preferences['preferred_categories']);
+            $topInterests = array_filter($topInterests, function($interest) use ($preferredCategoryIds) {
+                return in_array((int)$interest['category_id'], $preferredCategoryIds);
+            });
+            $topInterests = array_values($topInterests); // Re-index array
+        }
         
         $category_id = null;
         $category_name = null;
@@ -224,10 +253,10 @@ class ReminderModel extends db_connection
         // Get products user viewed but didn't purchase (in last 7 days)
         $sql = "SELECT DISTINCT ua.content_id as product_id, p.product_title, c.cat_name
                 FROM user_activity ua
-                INNER JOIN products p ON ua.content_id = p.product_id
+                INNER JOIN customer_products p ON ua.content_id = p.product_id
                 LEFT JOIN category c ON p.product_cat = c.cat_id
-                LEFT JOIN orders o ON o.customer_id = $customer_id
-                LEFT JOIN orderdetails od ON o.order_id = od.order_id AND od.product_id = p.product_id
+                LEFT JOIN customer_orders o ON o.customer_id = $customer_id
+                LEFT JOIN order_details od ON o.order_id = od.order_id AND od.product_id = p.product_id
                 WHERE ua.customer_id = $customer_id
                 AND ua.content_type = 'product'
                 AND ua.viewed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)

@@ -12,9 +12,10 @@
     text-align: center;
 }
 
+.wellness-hub-hero-content h1,
 .wellness-hub-title {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
     color: var(--foreground);
     margin-bottom: 0.75rem;
     line-height: 1.2;
@@ -389,10 +390,11 @@
 }
 
 .article-title {
-    font-size: 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     margin-bottom: 0.75rem;
     color: var(--foreground);
+    line-height: 1.4;
 }
 
 .article-title a {
@@ -563,8 +565,9 @@
 }
 
 @media (max-width: 768px) {
+    .wellness-hub-hero-content h1,
     .wellness-hub-title {
-        font-size: 2rem;
+        font-size: 0.8125rem !important;
     }
     
     .wellness-hub-subtitle {
@@ -656,7 +659,8 @@
     border-bottom: 1px solid var(--border);
 }
 
-.article-title {
+.single-article-main .article-title,
+.article-header-section .article-title {
     font-size: 2.5rem;
     font-weight: 700;
     color: var(--foreground);
@@ -746,7 +750,7 @@ a.article-card:hover {
 /* Responsive Design for Single Article */
 @media (max-width: 768px) {
     .article-title {
-        font-size: 1.75rem;
+        font-size: 0.875rem;
     }
     
     .article-meta-info {

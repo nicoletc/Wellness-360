@@ -44,6 +44,21 @@ class ProfileController {
                 // Get recommended content (dummy data for now)
                 $data['recommendedContent'] = $this->model->getRecommendedContent($customer_id);
                 
+                // Get reminder history (always load it, not just on reminders tab)
+                $data['reminderHistory'] = $this->model->getReminderHistory($customer_id, 30);
+                
+                // Get reminder preferences if on settings tab
+                if ($activeTab === 'settings') {
+                    require_once __DIR__ . '/../Classes/ReminderPreferencesModel.php';
+                    $prefsModel = new ReminderPreferencesModel();
+                    $data['reminderPreferences'] = $prefsModel->getPreferences($customer_id);
+                    
+                    // Get all categories for preference selection
+                    require_once __DIR__ . '/../Classes/WellnessHubModel.php';
+                    $wellnessModel = new WellnessHubModel();
+                    $data['categories'] = $wellnessModel->get_categories();
+                }
+                
                 // Format member since date
                 if (isset($userProfile['date_joined'])) {
                     $date = new DateTime($userProfile['date_joined']);

@@ -244,6 +244,7 @@ $placeholderImage = 'uploads/placeholder.jpg';
             data-page-type="product" 
             data-content-id="<?php echo htmlspecialchars($product['product_id']); ?>" 
             data-content-category="<?php echo htmlspecialchars($product['cat_name'] ?? 'general'); ?>"></script>
+    <script src="../js/wellness_chatbot.js"></script>
 </body>
 </html>
 

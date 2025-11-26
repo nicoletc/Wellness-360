@@ -49,6 +49,20 @@ function is_logged_in(): bool {
     return !empty($_SESSION[SESS_USER_ID]);
 }
 
+/* Admin helpers */
+function get_new_message_count(): int {
+    static $count = null;
+    
+    // Always get fresh count (static only caches within same page load)
+    if ($count === null) {
+        require_once __DIR__ . '/../Classes/ContactMessageModel.php';
+        $messageModel = new ContactMessageModel();
+        $count = $messageModel->getNewMessageCount();
+    }
+    
+    return $count;
+}
+
 function current_user_id(): ?int {
     return isset($_SESSION[SESS_USER_ID]) ? (int)$_SESSION[SESS_USER_ID] : null;
 }

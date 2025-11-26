@@ -40,7 +40,7 @@ class ProfileModel extends db_connection {
         try {
             $customer_id = (int)$customer_id;
             $sql = "SELECT customer_id, customer_name, customer_email, customer_contact, customer_image, user_role, date_joined 
-                    FROM customer WHERE customer_id = $customer_id";
+                    FROM customers WHERE customer_id = $customer_id";
             
             return $this->db_fetch_one($sql);
         } catch (Exception $e) {
@@ -81,7 +81,7 @@ class ProfileModel extends db_connection {
         
         // Get orders placed count
         $orders_sql = "SELECT COUNT(*) as count 
-                      FROM orders 
+                      FROM customer_orders 
                       WHERE customer_id = $customer_id";
         $orders_result = $this->db_fetch_one($orders_sql);
         if ($orders_result && isset($orders_result['count'])) {
@@ -115,9 +115,9 @@ class ProfileModel extends db_connection {
         $sql = "SELECT o.*, 
                        COUNT(od.product_id) as item_count,
                        SUM(p.product_price * od.qty) as total_amount
-                FROM orders o
-                LEFT JOIN orderdetails od ON o.order_id = od.order_id
-                LEFT JOIN products p ON od.product_id = p.product_id
+                FROM customer_orders o
+                LEFT JOIN order_details od ON o.order_id = od.order_id
+                LEFT JOIN customer_products p ON od.product_id = p.product_id
                 WHERE o.customer_id = $customer_id
                 GROUP BY o.order_id
                 ORDER BY o.order_date DESC";
@@ -159,7 +159,7 @@ class ProfileModel extends db_connection {
         $sql = "SELECT pl.product_id, pl.created_at,
                        p.product_title, p.product_price, p.product_image
                 FROM product_likes pl
-                INNER JOIN products p ON pl.product_id = p.product_id
+                INNER JOIN customer_products p ON pl.product_id = p.product_id
                 WHERE pl.customer_id = $customer_id
                 ORDER BY pl.created_at DESC";
         
@@ -266,8 +266,8 @@ class ProfileModel extends db_connection {
         // Get products user has viewed but not purchased
         $viewed_products_sql = "SELECT DISTINCT ua.content_id as product_id
                                FROM user_activity ua
-                               LEFT JOIN orders o ON o.customer_id = $customer_id
-                               LEFT JOIN orderdetails od ON o.order_id = od.order_id AND od.product_id = ua.content_id
+                               LEFT JOIN customer_orders o ON o.customer_id = $customer_id
+                               LEFT JOIN order_details od ON o.order_id = od.order_id AND od.product_id = ua.content_id
                                WHERE ua.customer_id = $customer_id
                                AND ua.content_type = 'product'
                                AND ua.category_id IN ($category_ids_str)
@@ -280,7 +280,7 @@ class ProfileModel extends db_connection {
         // Recommend products from top interest categories (excluding already viewed)
         $products_sql = "SELECT p.product_id, p.product_title, p.product_price, p.product_image, p.product_desc,
                                c.cat_name
-                        FROM products p
+                        FROM customer_products p
                         INNER JOIN category c ON p.product_cat = c.cat_id
                         WHERE p.product_cat IN ($category_ids_str)
                         " . (!empty($viewed_product_ids) ? "AND p.product_id NOT IN (" . implode(',', array_map('intval', $viewed_product_ids)) . ")" : "") . "
@@ -337,6 +337,19 @@ class ProfileModel extends db_connection {
         
         // Limit to 6 recommendations
         return array_slice($recommendations, 0, 6);
+    }
+    
+    /**
+     * Get reminder history for user
+     * @param int $customer_id Customer ID
+     * @param int $limit Number of reminders to return
+     * @return array Reminder history
+     */
+    public function getReminderHistory($customer_id, $limit = 30)
+    {
+        require_once __DIR__ . '/ReminderPreferencesModel.php';
+        $prefsModel = new ReminderPreferencesModel();
+        return $prefsModel->getReminderHistory($customer_id, $limit);
     }
 }
 

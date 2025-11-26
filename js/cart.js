@@ -103,7 +103,7 @@ async function removeFromCart(productId) {
         const result = await response.json();
         
         if (result.status === 'success') {
-            // Show success message
+            // Show success message first, then reload/update
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
@@ -111,19 +111,31 @@ async function removeFromCart(productId) {
                     text: result.message || 'Product removed from cart.',
                     timer: 1500,
                     showConfirmButton: false
+                }).then(() => {
+                    // After Sweet Alert closes, reload or update
+                    if (document.getElementById('cart-items')) {
+                        location.reload();
+                    } else {
+                        // Remove item from DOM if on a different page
+                        const itemElement = document.querySelector(`[data-product-id="${productId}"]`);
+                        if (itemElement) {
+                            itemElement.remove();
+                        }
+                        updateCartCount();
+                    }
                 });
-            }
-            
-            // Reload cart page or remove item from DOM
-            if (document.getElementById('cart-items')) {
-                location.reload();
             } else {
-                // Remove item from DOM if on a different page
-                const itemElement = document.querySelector(`[data-product-id="${productId}"]`);
-                if (itemElement) {
-                    itemElement.remove();
+                // Fallback: show alert and then reload/update
+                alert(result.message || 'Product removed from cart.');
+                if (document.getElementById('cart-items')) {
+                    location.reload();
+                } else {
+                    const itemElement = document.querySelector(`[data-product-id="${productId}"]`);
+                    if (itemElement) {
+                        itemElement.remove();
+                    }
+                    updateCartCount();
                 }
-                updateCartCount();
             }
             
             return true;

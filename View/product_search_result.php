@@ -344,6 +344,7 @@ $placeholderImage = 'uploads/placeholder.jpg';
     <script src="../js/main.js"></script>
     <script src="../js/product_search.js"></script>
     <script src="../js/cart_count.js"></script>
+    <script src="../js/wellness_chatbot.js"></script>
 </body>
 </html>
 

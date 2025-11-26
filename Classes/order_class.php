@@ -48,7 +48,7 @@ class order_class extends db_connection
             ];
         }
         
-        $sql = "INSERT INTO orders (customer_id, invoice_no, order_date, order_status) 
+        $sql = "INSERT INTO customer_orders (customer_id, invoice_no, order_date, order_status) 
                 VALUES ($customer_id, '$invoice_no', NOW(), '$order_status')";
         
         if ($this->db_query($sql)) {
@@ -101,7 +101,7 @@ class order_class extends db_connection
             ];
         }
         
-        $sql = "INSERT INTO orderdetails (order_id, product_id, qty) 
+        $sql = "INSERT INTO order_details (order_id, product_id, qty) 
                 VALUES ($order_id, $product_id, $qty)";
         
         if ($this->db_query($sql)) {
@@ -184,7 +184,7 @@ class order_class extends db_connection
             $values[] = "'$payment_channel'";
         }
         
-        $sql = "INSERT INTO payment (" . implode(', ', $fields) . ") 
+        $sql = "INSERT INTO payments (" . implode(', ', $fields) . ") 
                 VALUES (" . implode(', ', $values) . ")";
         
         if ($this->db_query($sql)) {
@@ -220,9 +220,9 @@ class order_class extends db_connection
         $sql = "SELECT o.*, 
                        COUNT(od.product_id) as item_count,
                        SUM(p.product_price * od.qty) as total_amount
-                FROM orders o
-                LEFT JOIN orderdetails od ON o.order_id = od.order_id
-                LEFT JOIN products p ON od.product_id = p.product_id
+                FROM customer_orders o
+                LEFT JOIN order_details od ON o.order_id = od.order_id
+                LEFT JOIN customer_products p ON od.product_id = p.product_id
                 WHERE o.customer_id = $customer_id
                 GROUP BY o.order_id
                 ORDER BY o.order_date DESC";
@@ -263,7 +263,7 @@ class order_class extends db_connection
         }
         
         // Get order info
-        $order_sql = "SELECT * FROM orders WHERE order_id = $order_id";
+        $order_sql = "SELECT * FROM customer_orders WHERE order_id = $order_id";
         $order = $this->db_fetch_one($order_sql);
         
         if (!$order) {
@@ -272,13 +272,13 @@ class order_class extends db_connection
         
         // Get order items
         $items_sql = "SELECT od.*, p.product_title, p.product_price, p.product_image
-                     FROM orderdetails od
-                     INNER JOIN products p ON od.product_id = p.product_id
+                     FROM order_details od
+                     INNER JOIN customer_products p ON od.product_id = p.product_id
                      WHERE od.order_id = $order_id";
         $items = $this->db_fetch_all($items_sql);
         
         // Get payment info
-        $payment_sql = "SELECT * FROM payment WHERE order_id = $order_id";
+        $payment_sql = "SELECT * FROM payments WHERE order_id = $order_id";
         $payment = $this->db_fetch_one($payment_sql);
         
         return [

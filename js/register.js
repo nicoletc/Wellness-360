@@ -331,20 +331,26 @@ async function handleFormSubmit(e) {
 
         if (result.status) {
             // Success - show Sweet Alert and redirect
+            // Check if user was auto-logged in (came from checkout)
+            const isAutoLoggedIn = result.auto_logged_in === true;
+            const isCheckoutRedirect = result.redirect && result.redirect.includes('checkout');
+            
             Swal.fire({
                 icon: 'success',
                 title: 'Registration Successful!',
-                text: result.message || 'Your account has been created successfully. You are now logged in!',
+                text: isAutoLoggedIn 
+                    ? (result.message || 'Your account has been created and you have been automatically logged in!')
+                    : (result.message || 'Your account has been created successfully. Please log in to continue.'),
                 confirmButtonColor: '#7FB685',
-                confirmButtonText: 'Continue',
-                timer: 1500,
+                confirmButtonText: isAutoLoggedIn ? (isCheckoutRedirect ? 'Go to Checkout' : 'Continue') : 'Go to Login',
+                timer: isAutoLoggedIn ? 1500 : 2000,
                 timerProgressBar: true
             }).then(() => {
-                // Redirect based on server response or default
+                // Redirect based on result
                 if (result.redirect) {
                     window.location.href = result.redirect;
                 } else {
-                    window.location.href = '../index.php';
+                    window.location.href = '../View/login.php';
                 }
             });
         } else {

@@ -17,7 +17,7 @@ class ShopModel extends db_connection
     public function view_all_products($limit = null, $offset = 0)
     {
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 ORDER BY p.date_added DESC";
@@ -49,7 +49,7 @@ class ShopModel extends db_connection
         
         // Search in title, description, and keywords
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 WHERE p.product_title LIKE '%$query%' 
@@ -84,7 +84,7 @@ class ShopModel extends db_connection
         $cat_id = (int)$cat_id;
         
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 WHERE p.product_cat = $cat_id
@@ -111,7 +111,7 @@ class ShopModel extends db_connection
         $vendor_id = (int)$vendor_id;
         
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 WHERE p.product_vendor = $vendor_id
@@ -136,7 +136,7 @@ class ShopModel extends db_connection
         $id = (int)$id;
         
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id
                 WHERE p.product_id = $id";
@@ -192,7 +192,7 @@ class ShopModel extends db_connection
         }
         
         $sql = "SELECT p.*, c.cat_name, v.vendor_name 
-                FROM products p
+                FROM customer_products p
                 LEFT JOIN category c ON p.product_cat = c.cat_id
                 LEFT JOIN vendors v ON p.product_vendor = v.vendor_id";
         
@@ -265,7 +265,7 @@ class ShopModel extends db_connection
             $where[] = "p.product_keywords LIKE '%$keyword%'";
         }
         
-        $sql = "SELECT COUNT(*) as total FROM products p";
+        $sql = "SELECT COUNT(*) as total FROM customer_products p";
         
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -301,7 +301,7 @@ class ShopModel extends db_connection
      */
     public function get_price_range()
     {
-        $sql = "SELECT MIN(product_price) as min_price, MAX(product_price) as max_price FROM products";
+        $sql = "SELECT MIN(product_price) as min_price, MAX(product_price) as max_price FROM customer_products";
         $result = $this->db_fetch_one($sql);
         
         return [

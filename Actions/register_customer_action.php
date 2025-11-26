@@ -66,33 +66,33 @@ $controller = new customer_controller();
 // Register customer
 $result = $controller->register_customer_ctr($data);
 
-// If registration successful, transfer cart items and set session
+// If registration successful, transfer cart and handle redirect
 if ($result['status'] && isset($result['customer_id'])) {
-    $customer_id = $result['customer_id'];
-    
-    // Fetch customer data for session
-    $customer = $controller->get_customer_by_id_ctr($customer_id);
-    
-    if ($customer && is_array($customer)) {
-        
-        // Set session variables for auto-login after registration
-        $_SESSION[SESS_USER_ID] = $customer['customer_id'];
-        $_SESSION[SESS_USER_NAME] = $customer['customer_name'];
-        $_SESSION[SESS_USER_EMAIL] = $customer['customer_email'];
-        $_SESSION[SESS_USER_ROLE] = $customer['user_role'] ?? 2;
-        
-        if (isset($customer['customer_contact'])) {
-            $_SESSION['customer_contact'] = $customer['customer_contact'];
-        }
-        if (isset($customer['customer_image'])) {
-            $_SESSION['customer_image'] = $customer['customer_image'];
-        }
+    // Normalize IP address (convert IPv6 localhost to IPv4)
+    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    if ($ip_address === '::1') {
+        $ip_address = '127.0.0.1';
     }
     
-    // Transfer cart items from IP to customer_id (if guest had items in cart)
-    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    // Also check if there's a stored IP in session (from before registration)
+    $stored_ip = isset($_SESSION['guest_ip_address']) ? $_SESSION['guest_ip_address'] : $ip_address;
+    
+    // Transfer cart items from IP to customer_id immediately after registration
+    require_once __DIR__ . '/../Controllers/cart_controller.php';
     $cart_controller = new cart_controller();
-    $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($ip_address, $customer_id);
+    
+    // Try transferring from stored IP first (this is the IP they had when they added items)
+    $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($stored_ip, $result['customer_id']);
+    
+    // If no items transferred from stored IP, try current IP
+    if ($transfer_result['transferred'] == 0 && $transfer_result['merged'] == 0 && $stored_ip !== $ip_address) {
+        $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($ip_address, $result['customer_id']);
+    }
+    
+    // Clear stored IP after transfer
+    unset($_SESSION['guest_ip_address']);
+    
+    error_log("Cart transfer on registration - Stored IP: $stored_ip, Current IP: $ip_address, Transferred: " . ($transfer_result['transferred'] ?? 0) . ", Merged: " . ($transfer_result['merged'] ?? 0));
     
     // Handle redirect
     $redirect_url = null;
@@ -104,11 +104,40 @@ if ($result['status'] && isset($result['customer_id'])) {
         }
     }
     
-    if ($redirect_url) {
+    // Check if redirect contains checkout - if so, auto-login and redirect to checkout
+    if ($redirect_url && strpos($redirect_url, 'checkout') !== false) {
+        // Get customer data for auto-login using the customer_id from registration result
+        $customer_data = $controller->get_customer_by_id_ctr($result['customer_id']);
+        
+        if ($customer_data) {
+            // Auto-login the user since they came from checkout
+            $_SESSION[SESS_USER_ID] = $customer_data['customer_id'];
+            $_SESSION[SESS_USER_NAME] = $customer_data['customer_name'];
+            $_SESSION[SESS_USER_EMAIL] = $customer_data['customer_email'];
+            $_SESSION[SESS_USER_ROLE] = $customer_data['user_role'] ?? 2; // Customer role
+            
+            // Add customer contact and image to session if available
+            if (isset($customer_data['customer_contact'])) {
+                $_SESSION['customer_contact'] = $customer_data['customer_contact'];
+            }
+            if (isset($customer_data['customer_image'])) {
+                $_SESSION['customer_image'] = $customer_data['customer_image'];
+            }
+            
+            // Redirect directly to checkout (they're now logged in)
+            $result['redirect'] = app_url($redirect_url);
+            $result['auto_logged_in'] = true;
+            $result['message'] = 'Account created successfully! You have been automatically logged in.';
+        } else {
+            // Fallback if customer data not found - still redirect but they'll need to log in
+            $result['redirect'] = app_url($redirect_url);
+        }
+    } elseif ($redirect_url) {
+        // Other redirects - go to the specified page (they'll need to log in)
         $result['redirect'] = app_url($redirect_url);
     } else {
-        // Default to home page
-        $result['redirect'] = app_url(PATH_HOME);
+        // No redirect - default to login page
+        $result['redirect'] = app_url(PATH_LOGIN);
     }
 }
 

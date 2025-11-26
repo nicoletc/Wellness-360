@@ -48,9 +48,33 @@ if ($result['status']) {
     }
     
     // Transfer cart items from IP to customer_id (if guest had items in cart)
+    // Normalize IP address (convert IPv6 localhost to IPv4)
     $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $cart_controller = new cart_controller();
-    $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($ip_address, $customer['customer_id']);
+    if ($ip_address === '::1') {
+        $ip_address = '127.0.0.1';
+    }
+    
+    // Also check if there's a stored IP in session (from before registration)
+    if (isset($_SESSION['guest_ip_address'])) {
+        $stored_ip = $_SESSION['guest_ip_address'];
+        // Try transferring from stored IP first (this is the IP they had when they added items)
+        $cart_controller = new cart_controller();
+        $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($stored_ip, $customer['customer_id']);
+        
+        // If no items transferred from stored IP, try current IP
+        if ($transfer_result['transferred'] == 0 && $transfer_result['merged'] == 0 && $stored_ip !== $ip_address) {
+            $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($ip_address, $customer['customer_id']);
+        }
+        
+        // Clear stored IP after transfer
+        unset($_SESSION['guest_ip_address']);
+    } else {
+        // No stored IP, just use current IP
+        $cart_controller = new cart_controller();
+        $transfer_result = $cart_controller->transfer_cart_from_ip_ctr($ip_address, $customer['customer_id']);
+    }
+    
+    error_log("Cart transfer on login - IP: $ip_address, Transferred: " . ($transfer_result['transferred'] ?? 0) . ", Merged: " . ($transfer_result['merged'] ?? 0));
     
     // Determine redirect path
     // Check if there's a redirect parameter in the request
@@ -68,7 +92,7 @@ if ($result['status']) {
         $redirect_path = ($customer['user_role'] == ROLE_ADMIN) ? PATH_ADMIN : PATH_HOME;
         $redirect_url = app_url($redirect_path);
     } else {
-        // Use the redirect parameter
+        // Use the redirect parameter as-is
         $redirect_url = app_url($redirect_url);
     }
     

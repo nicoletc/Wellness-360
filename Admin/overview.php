@@ -67,6 +67,15 @@ $recentActivity = $adminModel->getRecentActivity(4);
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>Workshops</span>
                 </a>
+                <a href="messages.php?status=new" class="nav-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Messages</span>
+                    <?php 
+                    $newCount = get_new_message_count();
+                    if ($newCount > 0): ?>
+                        <span class="badge"><?php echo $newCount; ?></span>
+                    <?php endif; ?>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -181,6 +190,10 @@ $recentActivity = $adminModel->getRecentActivity(4);
                 <a href="articles.php" class="quick-action-btn">
                     <i class="fas fa-file-alt"></i>
                     <span>Manage Articles</span>
+                </a>
+                <a href="workshops.php" class="quick-action-btn">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Manage Workshops</span>
                 </a>
             </div>
         </div>

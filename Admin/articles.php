@@ -75,6 +75,15 @@ require_admin();
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>Workshops</span>
                 </a>
+                <a href="messages.php?status=new" class="nav-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Messages</span>
+                    <?php 
+                    $newCount = get_new_message_count();
+                    if ($newCount > 0): ?>
+                        <span class="badge"><?php echo $newCount; ?></span>
+                    <?php endif; ?>
+                </a>
             </nav>
 
             <div class="sidebar-footer">

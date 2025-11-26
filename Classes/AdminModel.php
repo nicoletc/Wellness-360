@@ -31,14 +31,14 @@ class AdminModel extends db_connection
         ];
         
         // Get total users count
-        $users_sql = "SELECT COUNT(*) as count FROM customer";
+        $users_sql = "SELECT COUNT(*) as count FROM customers";
         $users_result = $this->db_fetch_one($users_sql);
         if ($users_result && isset($users_result['count'])) {
             $stats['totalUsers'] = (int)$users_result['count'];
         }
         
         // Get total products count
-        $products_sql = "SELECT COUNT(*) as count FROM products";
+        $products_sql = "SELECT COUNT(*) as count FROM customer_products";
         $products_result = $this->db_fetch_one($products_sql);
         if ($products_result && isset($products_result['count'])) {
             $stats['totalProducts'] = (int)$products_result['count'];
@@ -76,7 +76,7 @@ class AdminModel extends db_connection
         
         // Get recent user registrations
         $users_sql = "SELECT customer_id, customer_name, date_joined 
-                      FROM customer 
+                      FROM customers 
                       ORDER BY date_joined DESC 
                       LIMIT " . (int)$limit;
         $users = $this->db_fetch_all($users_sql);
@@ -95,7 +95,7 @@ class AdminModel extends db_connection
         
         // Get recent products added
         $products_sql = "SELECT product_id, product_title, date_added 
-                        FROM products 
+                        FROM customer_products 
                         ORDER BY date_added DESC 
                         LIMIT " . (int)$limit;
         $products = $this->db_fetch_all($products_sql);
@@ -133,8 +133,8 @@ class AdminModel extends db_connection
         
         // Get recent orders
         $orders_sql = "SELECT o.order_id, o.order_date, c.customer_name 
-                      FROM orders o
-                      LEFT JOIN customer c ON o.customer_id = c.customer_id
+                      FROM customer_orders o
+                      LEFT JOIN customers c ON o.customer_id = c.customer_id
                       ORDER BY o.order_date DESC 
                       LIMIT " . (int)$limit;
         $orders = $this->db_fetch_all($orders_sql);
@@ -147,6 +147,25 @@ class AdminModel extends db_connection
                     'title' => 'New order placed' . ($order['customer_name'] ? ' by ' . htmlspecialchars($order['customer_name']) : ''),
                     'time' => $this->getTimeAgo($order['order_date']),
                     'timestamp' => strtotime($order['order_date'])
+                ];
+            }
+        }
+        
+        // Get recent contact messages
+        $messages_sql = "SELECT message_id, first_name, last_name, subject, created_at 
+                        FROM contact_messages 
+                        ORDER BY created_at DESC 
+                        LIMIT " . (int)$limit;
+        $messages = $this->db_fetch_all($messages_sql);
+        
+        if ($messages && is_array($messages)) {
+            foreach ($messages as $message) {
+                $activities[] = [
+                    'type' => 'message',
+                    'icon' => 'envelope',
+                    'title' => 'New message from ' . htmlspecialchars($message['first_name'] . ' ' . $message['last_name']) . ': ' . htmlspecialchars($message['subject']),
+                    'time' => $this->getTimeAgo($message['created_at']),
+                    'timestamp' => strtotime($message['created_at'])
                 ];
             }
         }

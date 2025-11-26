@@ -15,7 +15,7 @@ class user_class extends db_connection
     public function get_all()
     {
         $sql = "SELECT customer_id, customer_name, customer_email, customer_contact, date_joined, customer_image, user_role 
-                FROM customer 
+                FROM customers 
                 ORDER BY date_joined DESC";
         return $this->db_fetch_all($sql);
     }
@@ -29,7 +29,7 @@ class user_class extends db_connection
     {
         $customer_id = (int)$customer_id;
         $sql = "SELECT customer_id, customer_name, customer_email, customer_contact, date_joined, customer_image, user_role 
-                FROM customer 
+                FROM customers 
                 WHERE customer_id = $customer_id";
         return $this->db_fetch_one($sql);
     }
@@ -61,7 +61,7 @@ class user_class extends db_connection
         }
 
         // Check if user has orders
-        $check_orders = "SELECT COUNT(*) as count FROM orders WHERE customer_id = $customer_id";
+        $check_orders = "SELECT COUNT(*) as count FROM customer_orders WHERE customer_id = $customer_id";
         $order_count = $this->db_fetch_one($check_orders);
         
         if ($order_count && $order_count['count'] > 0) {
@@ -72,11 +72,11 @@ class user_class extends db_connection
         }
 
         // Delete user's cart items first
-        $delete_cart = "DELETE FROM cart WHERE c_id = $customer_id";
+        $delete_cart = "DELETE FROM carts WHERE c_id = $customer_id";
         $this->db_query($delete_cart);
 
         // Delete user
-        $sql = "DELETE FROM customer WHERE customer_id = $customer_id";
+        $sql = "DELETE FROM customers WHERE customer_id = $customer_id";
         $result = $this->db_query($sql);
 
         if ($result) {

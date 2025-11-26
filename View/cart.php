@@ -7,6 +7,15 @@
 require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../Controllers/cart_controller.php';
 
+// Store guest IP in session if not logged in (for cart transfer after registration/login)
+if (!is_logged_in()) {
+    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    if ($ip_address === '::1') {
+        $ip_address = '127.0.0.1';
+    }
+    $_SESSION['guest_ip_address'] = $ip_address;
+}
+
 // Initialize cart controller
 $cart_controller = new cart_controller();
 
@@ -240,9 +249,9 @@ $placeholderImage = 'uploads/placeholder.jpg';
                 <div class="footer-section">
                     <h4>Contact Us</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> info@wellness360.com</li>
-                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Wellness St, Health City</li>
+                        <li><i class="fas fa-envelope"></i> wellnessallround@gmail.com</li>
+                        <li><i class="fas fa-phone"></i> 0204567321</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 3rd Circular rd, Tema</li>
                     </ul>
                 </div>
             </div>
