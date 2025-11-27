@@ -90,10 +90,11 @@ if ($result['status']) {
     if (!$redirect_url) {
         // Default redirect based on role
         $redirect_path = ($customer['user_role'] == ROLE_ADMIN) ? PATH_ADMIN : PATH_HOME;
-        $redirect_url = app_url($redirect_path);
+        // Return relative path for JavaScript redirect (not absolute)
+        $redirect_url = $redirect_path;
     } else {
-        // Use the redirect parameter as-is
-        $redirect_url = app_url($redirect_url);
+        // Use the redirect parameter as-is (already relative)
+        $redirect_url = $redirect_url;
     }
     
     $result['redirect'] = $redirect_url;

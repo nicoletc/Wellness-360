@@ -121,7 +121,14 @@ async function handleLoginSubmit(e) {
             }).then(() => {
                 // Redirect based on role (handled by server response)
                 if (result.redirect) {
-                    window.location.href = result.redirect;
+                    // Since we're in View/login.php, we need to go up one level for root files
+                    // result.redirect will be like 'index.php' or 'Admin/overview.php'
+                    let redirectPath = result.redirect;
+                    if (!redirectPath.startsWith('/') && !redirectPath.startsWith('http')) {
+                        // Relative path - we're in View/, so go up one level
+                        redirectPath = '../' + redirectPath;
+                    }
+                    window.location.href = redirectPath;
                 } else {
                     window.location.href = '../index.php';
                 }
