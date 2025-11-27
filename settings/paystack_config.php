@@ -9,7 +9,16 @@ require_once __DIR__ . '/core.php';
 
 // Environment configuration
 define('APP_ENVIRONMENT', 'test'); // Change to 'live' for production
-define('APP_BASE_URL', 'http://localhost/final'); // Update this to your actual domain
+
+// Dynamically determine base URL
+function get_app_base_url(): string {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+    $base_path = get_base_path();
+    return $protocol . '://' . $host . $base_path . APP_BASE;
+}
+
+define('APP_BASE_URL', get_app_base_url());
 
 // Paystack API Keys
 define('PAYSTACK_SECRET_KEY', 'sk_test_f78af66703a0345d4a49cb465ca9846ae9e7a8d6'); // Your secret key

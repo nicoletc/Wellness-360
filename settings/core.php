@@ -78,34 +78,17 @@ function app_full_url(string $path): string {
     return $protocol . '://' . $host . $url_path;
 }
 
-/* Redirect helper */
+/* Redirect helper - uses full URLs for reliability */
 function redirect(string $path): void {
     if (preg_match('~^https?://~i', $path)) {
+        // Already a full URL - use as-is
         header('Location: ' . $path);
     } else {
-        // Get the base path dynamically (includes user home if present)
-        $base_path = get_base_path();
-        
-        if (str_starts_with($path, '/')) {
-            // Already absolute - check if it needs base path
-            if (str_starts_with($path, '/final/')) {
-                // Has /final/ - prepend base path
-                $redirect_url = $base_path . $path;
-            } else if (str_starts_with($path, $base_path)) {
-                // Already has base path - use as-is
-                $redirect_url = $path;
-            } else {
-                // Absolute path - prepend base path and /final/
-                $redirect_url = $base_path . APP_BASE . $path;
-            }
-        } else {
-            // Relative path (e.g., 'index.php' or 'View/login.php')
-            // Add base path + /final/ + path
-            $redirect_url = $base_path . APP_BASE . '/' . ltrim($path, '/');
-        }
+        // Convert to full URL using app_full_url()
+        $redirect_url = app_full_url($path);
         
         // Log for debugging (remove in production if needed)
-        error_log("Redirect: path='$path' -> redirect_url='$redirect_url' (base_path='$base_path')");
+        error_log("Redirect: path='$path' -> redirect_url='$redirect_url'");
         
         header('Location: ' . $redirect_url);
     }
