@@ -7,6 +7,24 @@ if (session_status() === PHP_SESSION_NONE) {
 ob_start();
 
 /* Paths */
+// Detect base path dynamically from current request
+function get_base_path(): string {
+    static $base_path = null;
+    if ($base_path === null) {
+        // Get the script directory relative to document root
+        $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+        // Remove /final if it's in the path (since we're already in /final/)
+        $script_dir = str_replace('/final', '', $script_dir);
+        // Get the base path (everything before /final/)
+        $base_path = rtrim($script_dir, '/');
+        // If we're at root level, base_path will be empty, so use /
+        if (empty($base_path)) {
+            $base_path = '/';
+        }
+    }
+    return $base_path;
+}
+
 const APP_BASE   = '/final';
 const PATH_LOGIN = 'View/login.php';
 const PATH_REGISTER = 'View/register.php';
@@ -23,7 +41,22 @@ const ROLE_CUSTOMER  = 2;
 
 /* URL helper */
 function app_url(string $path): string {
-    return APP_BASE . '/' . ltrim($path, '/');
+    // Get the base path dynamically (includes user home if present)
+    $base_path = get_base_path();
+    
+    if (str_starts_with($path, '/')) {
+        // Already absolute - check if it needs base path
+        if (str_starts_with($path, '/final/')) {
+            return $base_path . $path;
+        } else if (str_starts_with($path, $base_path)) {
+            return $path;
+        } else {
+            return $base_path . APP_BASE . $path;
+        }
+    } else {
+        // Relative path - add base path + /final/ + path
+        return $base_path . APP_BASE . '/' . ltrim($path, '/');
+    }
 }
 
 /* Redirect helper */
@@ -31,27 +64,29 @@ function redirect(string $path): void {
     if (preg_match('~^https?://~i', $path)) {
         header('Location: ' . $path);
     } else {
-        // For server-side redirects, create absolute path from document root
-        // If document root is /final/, paths should NOT include /final/ prefix
-        // If document root is /, paths should include /final/ prefix
-        // We'll assume document root is /final/ (common for shared hosting)
+        // Get the base path dynamically (includes user home if present)
+        $base_path = get_base_path();
+        
         if (str_starts_with($path, '/')) {
-            // Already absolute - if it starts with /final/, remove it (document root is /final/)
-            if (str_starts_with($path, APP_BASE . '/')) {
-                // Remove /final/ prefix since document root is /final/
-                $redirect_url = substr($path, strlen(APP_BASE));
-            } else {
-                // Absolute path without /final/ - use as-is (relative to document root)
+            // Already absolute - check if it needs base path
+            if (str_starts_with($path, '/final/')) {
+                // Has /final/ - prepend base path
+                $redirect_url = $base_path . $path;
+            } else if (str_starts_with($path, $base_path)) {
+                // Already has base path - use as-is
                 $redirect_url = $path;
+            } else {
+                // Absolute path - prepend base path and /final/
+                $redirect_url = $base_path . APP_BASE . $path;
             }
         } else {
             // Relative path (e.g., 'index.php' or 'View/login.php')
-            // Use as absolute from document root (which is /final/)
-            $redirect_url = '/' . ltrim($path, '/');
+            // Add base path + /final/ + path
+            $redirect_url = $base_path . APP_BASE . '/' . ltrim($path, '/');
         }
         
         // Log for debugging (remove in production if needed)
-        error_log("Redirect: path='$path' -> redirect_url='$redirect_url'");
+        error_log("Redirect: path='$path' -> redirect_url='$redirect_url' (base_path='$base_path')");
         
         header('Location: ' . $redirect_url);
     }
