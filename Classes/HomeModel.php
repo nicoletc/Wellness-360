@@ -19,7 +19,7 @@ class HomeModel extends db_connection
             return [];
         }
         
-        $sql = "SELECT a.article_id, a.article_title, a.article_author, a.date_added,
+        $sql = "SELECT a.article_id, a.article_title, a.article_author, a.article_image, a.date_added,
                        c.cat_name as category_name
                 FROM articles a
                 LEFT JOIN category c ON a.article_cat = c.cat_id
@@ -45,7 +45,7 @@ class HomeModel extends db_connection
                 'title' => $article['article_title'],
                 'category' => $article['category_name'] ?? 'Uncategorized',
                 'author' => $article['article_author'],
-                'image' => '../../uploads/placeholder.jpg', // Default placeholder
+                'image' => !empty($article['article_image']) ? $article['article_image'] : '../../uploads/placeholder.jpg',
                 'readTime' => $readTime,
                 'article_id' => (int)$article['article_id']
             ];

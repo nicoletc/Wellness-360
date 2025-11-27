@@ -23,6 +23,17 @@ document.addEventListener('DOMContentLoaded', function() {
         updateForm.addEventListener('submit', handleUpdateArticle);
     }
 
+    // Image upload handler
+    const imageInput = document.getElementById('add_article_image');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleAddImagePreview);
+    }
+
+    const updateImageInput = document.getElementById('update_article_image');
+    if (updateImageInput) {
+        updateImageInput.addEventListener('change', handleUpdateImagePreview);
+    }
+
     // PDF upload handler
     const pdfInput = document.getElementById('article_pdf');
     if (pdfInput) {
@@ -196,6 +207,92 @@ function handleUpdatePdfPreview(e) {
 /**
  * Upload article PDF
  */
+/**
+ * Upload article image
+ */
+async function uploadArticleImage(file, articleId = 0) {
+    if (!file) {
+        return { status: true, path: '' };
+    }
+
+    if (!articleId || articleId <= 0) {
+        return {
+            status: false,
+            message: 'Invalid article ID. Cannot upload image.'
+        };
+    }
+
+    const formData = new FormData();
+    formData.append('article_image', file);
+    formData.append('article_id', articleId);
+
+    try {
+        const response = await fetch('../Actions/upload_article_image_action.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            return {
+                status: true,
+                path: result.image_path || result.path
+            };
+        } else {
+            return {
+                status: false,
+                message: result.message || 'Failed to upload image.'
+            };
+        }
+    } catch (error) {
+        console.error('Image upload error:', error);
+        return {
+            status: false,
+            message: `Network error: ${error.message || 'Failed to upload image.'}`
+        };
+    }
+}
+
+/**
+ * Handle add image preview
+ */
+function handleAddImagePreview(e) {
+    const file = e.target.files[0];
+    const previewDiv = document.getElementById('add_image_preview');
+    const previewImg = document.getElementById('add_image_preview_img');
+    
+    if (file && previewDiv && previewImg) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewDiv.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else if (previewDiv) {
+        previewDiv.style.display = 'none';
+    }
+}
+
+/**
+ * Handle update image preview
+ */
+function handleUpdateImagePreview(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('update_image_preview');
+    
+    if (file && preview) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else if (preview) {
+        preview.style.display = 'none';
+    }
+}
+
 async function uploadArticlePdf(file, articleId = 0) {
     if (!file) {
         return { status: true, path: '' };
@@ -320,6 +417,50 @@ async function handleAddArticle(e) {
         // Small delay to ensure article is fully committed to database
         await new Promise(resolve => setTimeout(resolve, 100));
         
+        // Track image upload status
+        let imageUploadSuccess = false;
+        let imageUploadError = null;
+        
+        // Upload image if provided
+        if (imageFile) {
+            // Check file size before uploading (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (imageFile.size > maxSize) {
+                imageUploadError = {
+                    type: 'size',
+                    message: `Image too large: ${(imageFile.size / 1024 / 1024).toFixed(2)} MB (Maximum: 5 MB)`
+                };
+            } else {
+                try {
+                    const uploadResult = await uploadArticleImage(imageFile, articleId);
+                    if (uploadResult.status) {
+                        imageUploadSuccess = true;
+                        console.log('Image uploaded successfully. Path:', uploadResult.path);
+                    } else {
+                        imageUploadError = {
+                            type: 'upload',
+                            message: uploadResult.message || 'Unknown error'
+                        };
+                    }
+                } catch (uploadError) {
+                    imageUploadError = {
+                        type: 'network',
+                        message: uploadError.message || 'Network error or file processing failed'
+                    };
+                }
+            }
+            
+            // Show warning if image upload failed (but don't await - let it show in background)
+            if (imageUploadError) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Image Upload Failed',
+                    text: imageUploadError.message || 'Failed to upload image. Article will be created without image.',
+                    confirmButtonColor: '#7FB685'
+                });
+            }
+        }
+        
         // Track PDF upload status
         let pdfUploadSuccess = false;
         let pdfUploadError = null;
@@ -430,6 +571,7 @@ async function handleUpdateArticle(e) {
     const articleTitle = form.querySelector('[name="article_title"]').value.trim();
     const articleAuthor = form.querySelector('[name="article_author"]').value.trim();
     const articleCat = form.querySelector('[name="article_cat"]').value;
+    const imageFile = form.querySelector('[name="article_image"]')?.files[0];
     const pdfFile = form.querySelector('[name="article_pdf"]').files[0];
     const currentPdfPath = form.querySelector('[name="current_pdf_path"]').value;
 
@@ -443,11 +585,55 @@ async function handleUpdateArticle(e) {
     if (btnLoader) btnLoader.style.display = 'inline-block';
     submitBtn.disabled = true;
 
+    // Track image upload status
+    let imageUploadSuccess = false;
+    let imageUploadError = null;
+
     // Track PDF upload status
     let pdfUploadSuccess = false;
     let pdfUploadError = null;
 
     try {
+        // Upload new image if provided
+        if (imageFile) {
+            // Check file size before uploading (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (imageFile.size > maxSize) {
+                imageUploadError = {
+                    type: 'size',
+                    message: `Image too large: ${(imageFile.size / 1024 / 1024).toFixed(2)} MB (Maximum: 5 MB)`
+                };
+            } else {
+                try {
+                    const uploadResult = await uploadArticleImage(imageFile, articleId);
+                    if (uploadResult.status) {
+                        imageUploadSuccess = true;
+                        console.log('Update: Image uploaded successfully. Path:', uploadResult.path);
+                    } else {
+                        imageUploadError = {
+                            type: 'upload',
+                            message: uploadResult.message || 'Unknown error'
+                        };
+                    }
+                } catch (uploadError) {
+                    imageUploadError = {
+                        type: 'network',
+                        message: uploadError.message || 'Network error or file processing failed'
+                    };
+                }
+            }
+            
+            // Show warning if image upload failed
+            if (imageUploadError) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Image Upload Failed',
+                    text: imageUploadError.message || 'Failed to upload image. Article will be updated without new image.',
+                    confirmButtonColor: '#7FB685'
+                });
+            }
+        }
+
         // Upload new PDF if provided (PDF binary data is stored directly in database)
         if (pdfFile) {
             console.log('Update: PDF file selected. Size:', pdfFile.size, 'bytes, Article ID:', articleId);
@@ -579,6 +765,24 @@ async function openEditModal(articleId) {
                 form.querySelector('[name="article_author"]').value = article.article_author;
                 form.querySelector('[name="article_cat"]').value = article.article_cat;
                 form.querySelector('[name="current_pdf_path"]').value = article.article_body || '';
+
+                // Set image preview
+                const imagePreview = document.getElementById('update_image_preview');
+                if (imagePreview && article.article_image) {
+                    // Database stores paths as ../../uploads/... which is correct for Admin/ folder
+                    let imageSrc = article.article_image;
+                    if (!imageSrc.startsWith('../../') && !imageSrc.startsWith('../')) {
+                        if (imageSrc.startsWith('uploads/')) {
+                            imageSrc = '../../' + imageSrc;
+                        } else {
+                            imageSrc = '../../uploads/' + imageSrc;
+                        }
+                    }
+                    imagePreview.src = imageSrc;
+                    imagePreview.style.display = 'block';
+                } else if (imagePreview) {
+                    imagePreview.style.display = 'none';
+                }
 
                 // Set PDF preview
                 const preview = document.getElementById('update_pdf_preview');

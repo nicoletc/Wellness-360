@@ -68,6 +68,7 @@
 - article_author
 - article_cat
 - article_body
+- article_image (VARCHAR(255), NULL) - Path to article image (e.g., ../../uploads/u1/a1/image_1.jpg)
 - date_added
 - article_views
 

@@ -90,7 +90,8 @@ class article_class extends db_connection
         }
 
         // Insert article (article_body is LONGBLOB, handled separately via PDF upload)
-        // For now, insert without article_body - it will be added via upload_article_pdf_action.php
+        // article_image will be handled separately via upload_article_image_action.php
+        // For now, insert without article_body and article_image
         $sql = "INSERT INTO articles (article_title, article_author, article_cat) 
                 VALUES ('$article_title', '$article_author', $article_cat)";
         $result = $this->db_query($sql);
@@ -115,14 +116,14 @@ class article_class extends db_connection
      */
     public function get_all()
     {
-        $sql = "SELECT a.article_id, a.article_title, a.article_author, a.article_cat, a.date_added, 
+        $sql = "SELECT a.article_id, a.article_title, a.article_author, a.article_cat, a.article_image, a.date_added, 
                 CASE WHEN a.article_body IS NOT NULL AND LENGTH(a.article_body) > 0 THEN 1 ELSE 0 END as has_pdf,
                 COALESCE(COUNT(av.view_id), 0) as article_views,
                 c.cat_name 
                 FROM articles a
                 LEFT JOIN category c ON a.article_cat = c.cat_id
                 LEFT JOIN article_views av ON a.article_id = av.article_id
-                GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.date_added, c.cat_name
+                GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.article_image, a.date_added, c.cat_name
                 ORDER BY a.date_added DESC";
         return $this->db_fetch_all($sql);
     }
@@ -145,7 +146,7 @@ class article_class extends db_connection
                     WHERE a.article_id = $article_id";
         } else {
             // Exclude PDF binary data for performance
-            $sql = "SELECT a.article_id, a.article_title, a.article_author, a.article_cat, a.date_added,
+            $sql = "SELECT a.article_id, a.article_title, a.article_author, a.article_cat, a.article_image, a.date_added,
                     CASE WHEN a.article_body IS NOT NULL AND LENGTH(a.article_body) > 0 THEN 1 ELSE 0 END as has_pdf,
                     COALESCE(COUNT(av.view_id), 0) as article_views,
                     c.cat_name 
@@ -153,7 +154,7 @@ class article_class extends db_connection
                     LEFT JOIN category c ON a.article_cat = c.cat_id
                     LEFT JOIN article_views av ON a.article_id = av.article_id
                     WHERE a.article_id = $article_id
-                    GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.date_added, c.cat_name";
+                    GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.article_image, a.date_added, c.cat_name";
         }
         
         return $this->db_fetch_one($sql);

@@ -45,7 +45,7 @@ class WellnessHubController {
                         'date' => date('M d, Y', strtotime($article['date_added'])),
                         'views' => (int)($article['view_count'] ?? 0),
                         'has_pdf' => (bool)($article['has_pdf'] ?? false),
-                        'image' => '../../uploads/placeholder.jpg' // Placeholder for now
+                        'image' => !empty($article['article_image']) ? $article['article_image'] : '../../uploads/placeholder.jpg'
                     ];
                 }
             }
@@ -90,7 +90,8 @@ class WellnessHubController {
             'category_id' => $article['article_cat'],
             'date' => date('M d, Y', strtotime($article['date_added'])),
             'views' => (int)$article['view_count'],
-            'has_pdf' => (bool)$article['has_pdf']
+            'has_pdf' => (bool)$article['has_pdf'],
+            'image' => !empty($article['article_image']) ? $article['article_image'] : '../../uploads/placeholder.jpg'
         ];
     }
     

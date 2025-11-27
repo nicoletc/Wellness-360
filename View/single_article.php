@@ -103,6 +103,15 @@ $placeholderImage = '../../uploads/placeholder.jpg';
                 <span><?php echo htmlspecialchars($article['title']); ?></span>
             </nav>
 
+            <!-- Article Image -->
+            <?php if (!empty($article['image']) && $article['image'] !== '../../uploads/placeholder.jpg'): ?>
+                <div class="article-featured-image">
+                    <img src="<?php echo htmlspecialchars(get_image_path($article['image'])); ?>" 
+                         alt="<?php echo htmlspecialchars($article['title']); ?>"
+                         onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_image_path($placeholderImage)); ?>';">
+                </div>
+            <?php endif; ?>
+
             <!-- Article Header -->
             <div class="article-header-section">
                 <div class="article-category-badge">

@@ -638,6 +638,22 @@
     margin-bottom: 2rem;
 }
 
+.article-featured-image {
+    width: 100%;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.article-featured-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    max-height: 500px;
+}
+
 .article-breadcrumb a {
     color: var(--primary);
     text-decoration: none;

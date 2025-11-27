@@ -61,6 +61,7 @@ class WellnessHubModel extends db_connection {
                        a.article_title, 
                        a.article_author, 
                        a.article_cat, 
+                       a.article_image,
                        a.date_added,
                        CASE WHEN a.article_body IS NOT NULL AND LENGTH(a.article_body) > 0 THEN 1 ELSE 0 END as has_pdf,
                        COALESCE(COUNT(DISTINCT av.view_id), 0) as view_count,
@@ -69,7 +70,7 @@ class WellnessHubModel extends db_connection {
                 LEFT JOIN category c ON a.article_cat = c.cat_id
                 LEFT JOIN article_views av ON a.article_id = av.article_id
                 $where_sql
-                GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.date_added, c.cat_name
+                GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.article_image, a.date_added, c.cat_name
                 ORDER BY a.date_added DESC";
         
         $results = $this->db_fetch_all($sql);
@@ -88,6 +89,7 @@ class WellnessHubModel extends db_connection {
                        a.article_title, 
                        a.article_author, 
                        a.article_cat, 
+                       a.article_image,
                        a.date_added,
                        CASE WHEN a.article_body IS NOT NULL AND LENGTH(a.article_body) > 0 THEN 1 ELSE 0 END as has_pdf,
                        COALESCE(COUNT(DISTINCT av.view_id), 0) as view_count,
@@ -96,7 +98,7 @@ class WellnessHubModel extends db_connection {
                 LEFT JOIN category c ON a.article_cat = c.cat_id
                 LEFT JOIN article_views av ON a.article_id = av.article_id
                 WHERE a.article_id = $article_id
-                GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.date_added, c.cat_name";
+                GROUP BY a.article_id, a.article_title, a.article_author, a.article_cat, a.article_image, a.date_added, c.cat_name";
         
         return $this->db_fetch_one($sql);
     }

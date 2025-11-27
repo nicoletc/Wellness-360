@@ -175,6 +175,14 @@ require_admin();
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="add_article_image">Article Image</label>
+                        <input type="file" id="add_article_image" name="article_image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                        <small class="form-help">Upload article image (JPEG, PNG, GIF, or WebP, max 5MB).</small>
+                        <div id="add_image_preview" style="margin-top: 10px; display: none;">
+                            <img id="add_image_preview_img" style="max-width: 200px; max-height: 200px; border-radius: 4px;" alt="Preview">
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label for="article_pdf">Article PDF <span class="required">*</span></label>
                         <input type="file" id="article_pdf" name="article_pdf" accept="application/pdf" required>
                         <small class="form-help">Upload article PDF document (max 10MB).</small>
@@ -220,6 +228,12 @@ require_admin();
                         <select id="update_article_cat" name="article_cat" required>
                             <option value="">Select Category</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="update_article_image">Article Image</label>
+                        <input type="file" id="update_article_image" name="article_image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                        <small class="form-help">Upload new image to replace current one (JPEG, PNG, GIF, or WebP, max 5MB). Leave empty to keep current image.</small>
+                        <img id="update_image_preview" class="image-preview" alt="Image preview" style="max-width: 200px; max-height: 200px; border-radius: 4px; margin-top: 10px; display: none;">
                     </div>
                     <div class="form-group">
                         <label for="update_article_pdf">Article PDF</label>
