@@ -146,7 +146,7 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? '../../uploads/placeholder_av
                         <div class="profile-header">
                             <div class="profile-info">
                                 <div class="profile-avatar">
-                                    <img src="../<?php echo htmlspecialchars($userProfile['customer_image'] ?? $placeholderAvatar); ?>" 
+                                    <img src="<?php echo htmlspecialchars(get_image_path($userProfile['customer_image'] ?? $placeholderAvatar)); ?>" 
                                          alt="<?php echo htmlspecialchars($userProfile['customer_name']); ?>"
                                          onerror="this.onerror=null; this.style.display='none';">
                                 </div>
@@ -321,9 +321,9 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? '../../uploads/placeholder_av
                                         <div class="favorite-item">
                                             <a href="single_product.php?id=<?php echo $item['product_id']; ?>" style="text-decoration: none; color: inherit;">
                                                 <div class="favorite-image">
-                                                    <img src="../<?php echo htmlspecialchars($item['image']); ?>" 
+                                                    <img src="<?php echo htmlspecialchars(get_image_path($item['image'])); ?>" 
                                                          alt="<?php echo htmlspecialchars($item['title']); ?>"
-                                                         onerror="this.onerror=null; this.src='../../uploads/placeholder.jpg';">
+                                                         onerror="this.onerror=null; this.src='<?php echo get_image_path('../../uploads/placeholder.jpg'); ?>';">
                                                 </div>
                                                 <div class="favorite-content">
                                                     <h3 class="favorite-title"><?php echo htmlspecialchars($item['title']); ?></h3>
@@ -353,9 +353,9 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? '../../uploads/placeholder_av
                                     <?php foreach ($recommendedContent as $item): ?>
                                         <div class="recommended-card">
                                             <div class="recommended-image">
-                                                <img src="../<?php echo htmlspecialchars($item['image']); ?>" 
+                                                <img src="<?php echo htmlspecialchars(get_image_path($item['image'])); ?>" 
                                                      alt="<?php echo htmlspecialchars($item['title']); ?>"
-                                                     onerror="this.onerror=null; this.src='../uploads/placeholder.jpg';">
+                                                     onerror="this.onerror=null; this.src='<?php echo get_image_path('../../uploads/placeholder.jpg'); ?>';">
                                                 <span class="recommended-badge"><?php echo htmlspecialchars($item['category']); ?></span>
                                             </div>
                                             <div class="recommended-content">

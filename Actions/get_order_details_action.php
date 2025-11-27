@@ -61,10 +61,20 @@ try {
     
     // Format items
     foreach ($order_details['items'] as $item) {
+        // Normalize image path - ensure it has ../../uploads/ prefix for View folder
+        $image_path = $item['product_image'] ?: '../../uploads/placeholder.jpg';
+        if (!str_starts_with($image_path, '../../uploads/') && !str_starts_with($image_path, '../uploads/')) {
+            if (str_starts_with($image_path, 'uploads/')) {
+                $image_path = '../../' . $image_path;
+            } else {
+                $image_path = '../../uploads/' . ltrim($image_path, '/');
+            }
+        }
+        
         $response['items'][] = [
             'product_id' => (int)$item['product_id'],
             'product_title' => $item['product_title'],
-            'product_image' => $item['product_image'] ?: 'uploads/placeholder.jpg',
+            'product_image' => $image_path,
             'product_price' => floatval($item['product_price']),
             'quantity' => (int)$item['qty'],
             'subtotal' => floatval($item['product_price']) * (int)$item['qty']

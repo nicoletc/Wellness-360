@@ -68,9 +68,19 @@ function displayOrderModal(data) {
     if (items && items.length > 0) {
         itemsHtml = '<div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">';
         items.forEach(item => {
+            // Normalize image path - if it already starts with ../../, use as-is, otherwise prepend ../
+            let imagePath = item.product_image;
+            if (!imagePath.startsWith('../') && !imagePath.startsWith('../../')) {
+                if (imagePath.startsWith('uploads/')) {
+                    imagePath = '../../' + imagePath;
+                } else {
+                    imagePath = '../' + imagePath;
+                }
+            }
+            
             itemsHtml += `
                 <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid #eee; margin-bottom: 0.5rem;">
-                    <img src="../${item.product_image}" 
+                    <img src="${imagePath}" 
                          alt="${item.product_title}" 
                          style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"
                          onerror="this.src='../../uploads/placeholder.jpg';">

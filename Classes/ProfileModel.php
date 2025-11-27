@@ -309,7 +309,7 @@ class ProfileModel extends db_connection {
         $read_articles = $this->db_fetch_all($read_articles_sql);
         $read_article_ids = $read_articles ? array_column($read_articles, 'article_id') : [];
         
-        $articles_sql = "SELECT a.article_id, a.article_title, a.article_author, a.date_added,
+        $articles_sql = "SELECT a.article_id, a.article_title, a.article_author, a.date_added, a.article_image,
                                c.cat_name
                         FROM articles a
                         INNER JOIN category c ON a.article_cat = c.cat_id
@@ -326,7 +326,7 @@ class ProfileModel extends db_connection {
                 'title' => $article['article_title'],
                 'description' => 'Based on your interest in ' . ($article['cat_name'] ?? 'wellness') . ' topics',
                 'date' => date('Y-m-d', strtotime($article['date_added'])),
-                'image' => '../../uploads/placeholder.jpg',
+                'image' => $article['article_image'] ?: '../../uploads/placeholder.jpg',
                 'category' => $article['cat_name'] ?? 'Articles',
                 'type' => 'article'
             ];
