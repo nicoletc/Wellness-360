@@ -48,10 +48,10 @@ if ($uploadsRoot === false) {
 }
 
 $ext = strtolower(pathinfo($_FILES['article_image']['name'], PATHINFO_EXTENSION));
-$allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-if (!in_array($ext, $allowed)) {
+$ok  = ['jpg','jpeg','png','gif','webp'];
+if (!in_array($ext, $ok, true)) {
     http_response_code(400);
-    echo json_encode(['status'=>'error','message'=>'Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.']);
+    echo json_encode(['status'=>'error','message'=>'Unsupported file type.']);
     exit;
 }
 
@@ -62,53 +62,75 @@ if ($_FILES['article_image']['size'] > 5 * 1024 * 1024) {
     exit;
 }
 
-// Create directory structure: uploads/u{userId}/a{articleId}/
-$targetDir = $uploadsRoot . '/u' . $userId . '/a' . $articleId;
-if (!is_dir($targetDir)) {
-    if (!mkdir($targetDir, 0755, true)) {
+// Create user/article folders (same pattern as products)
+$uDirAbs = $uploadsRoot . "/u{$userId}";
+$aDirAbs = $uDirAbs . "/a{$articleId}";
+if (!is_dir($uDirAbs) && !mkdir($uDirAbs, 0777, true)) {
+    http_response_code(500);
+    echo json_encode(['status'=>'error','message'=>'Failed to create user folder.']);
+    exit;
+}
+if (!is_dir($aDirAbs) && !mkdir($aDirAbs, 0777, true)) {
+    http_response_code(500);
+    echo json_encode(['status'=>'error','message'=>'Failed to create article folder.']);
+    exit;
+}
+
+// Next index (image_1, image_2…)
+$files = glob($aDirAbs.'/image_*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE) ?: [];
+$next  = count($files) + 1;
+
+$destAbs = $aDirAbs . "/image_{$next}.{$ext}";
+
+// Final guard: ensure destination stays inside /uploads
+$realDest = realpath(dirname($destAbs));
+if ($realDest === false || strpos($realDest, $uploadsRoot) !== 0) {
+    http_response_code(400);
+    echo json_encode(['status'=>'error','message'=>'Invalid destination path.']);
+    exit;
+}
+
+if (!move_uploaded_file($_FILES['article_image']['tmp_name'], $destAbs)) {
+    http_response_code(500);
+    echo json_encode(['status'=>'error','message'=>'Could not store file.']);
+    exit;
+}
+
+// Store RELATIVE path in DB (same pattern as products)
+$relative = "../../uploads/u{$userId}/a{$articleId}/image_{$next}.{$ext}";
+
+try {
+    $db = new db_connection();
+    
+    // Ensure database connection is established
+    if (!$db->db_connect()) {
         http_response_code(500);
-        echo json_encode(['status'=>'error','message'=>'Could not create directory.']);
+        echo json_encode(['status'=>'error','message'=>'Database connection failed.']);
         exit;
     }
-}
-
-// Find next available image number
-$next = 1;
-while (file_exists($targetDir . '/image_' . $next . '.' . $ext)) {
-    $next++;
-}
-
-$filename = 'image_' . $next . '.' . $ext;
-$targetPath = $targetDir . '/' . $filename;
-
-if (!move_uploaded_file($_FILES['article_image']['tmp_name'], $targetPath)) {
+    
+    $articleIdEscaped = (int)$articleId; // Article ID is already an integer
+    $relativeEscaped = $db->escape_string($relative);
+    
+    // Verify the escaped string is not empty
+    if (empty($relativeEscaped)) {
+        http_response_code(500);
+        echo json_encode(['status'=>'error','message'=>'Failed to escape image path.']);
+        exit;
+    }
+    
+    $sql = "UPDATE articles SET article_image = '$relativeEscaped' WHERE article_id = $articleIdEscaped";
+    $result = $db->db_query($sql);
+    
+    if ($result) {
+        echo json_encode(['status'=>'success','path'=>$relative,'image_path'=>$relative,'article_id'=>$articleId]);
+    } else {
+        http_response_code(500);
+        $error = mysqli_error($db->db);
+        echo json_encode(['status'=>'error','message'=>'DB update failed: ' . ($error ?: 'Unknown error')]);
+    }
+} catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['status'=>'error','message'=>'Failed to save image.']);
-    exit;
-}
-
-// Relative path for database
-$relativePath = '../../uploads/u' . $userId . '/a' . $articleId . '/' . $filename;
-
-// Update database
-$db = new db_connection();
-if (!$db->db_connect()) {
-    http_response_code(500);
-    echo json_encode(['status'=>'error','message'=>'Database connection failed.']);
-    exit;
-}
-
-$relativePathEscaped = $db->escape_string($relativePath);
-$sql = "UPDATE articles SET article_image = '$relativePathEscaped' WHERE article_id = $articleId";
-
-if ($db->db_query($sql)) {
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Image uploaded successfully.',
-        'image_path' => $relativePath
-    ]);
-} else {
-    http_response_code(500);
-    echo json_encode(['status'=>'error','message'=>'Failed to update database.']);
+    echo json_encode(['status'=>'error','message'=>'DB update failed: ' . $e->getMessage()]);
 }
 

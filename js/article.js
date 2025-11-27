@@ -232,7 +232,30 @@ async function uploadArticleImage(file, articleId = 0) {
             body: formData
         });
 
-        const result = await response.json();
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Image upload HTTP error:', response.status, errorText);
+            return {
+                status: false,
+                message: `Server error (${response.status}). ${errorText || 'Failed to upload image.'}`
+            };
+        }
+
+        let result;
+        try {
+            const responseText = await response.text();
+            console.log('Image upload raw response:', responseText);
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Image upload JSON parse error:', parseError);
+            return {
+                status: false,
+                message: 'Invalid response from server. Please check server logs.'
+            };
+        }
+        
+        console.log('Image upload parsed response:', result);
         
         if (result.status === 'success') {
             return {
