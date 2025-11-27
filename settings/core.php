@@ -31,20 +31,23 @@ function redirect(string $path): void {
     if (preg_match('~^https?://~i', $path)) {
         header('Location: ' . $path);
     } else {
-        // For server-side redirects, always create absolute path from web root
-        // Since site is accessed via /final/, all paths must include /final/ prefix
+        // For server-side redirects, create absolute path from document root
+        // If document root is /final/, paths should NOT include /final/ prefix
+        // If document root is /, paths should include /final/ prefix
+        // We'll assume document root is /final/ (common for shared hosting)
         if (str_starts_with($path, '/')) {
-            // Already absolute - ensure it has /final/ prefix
+            // Already absolute - if it starts with /final/, remove it (document root is /final/)
             if (str_starts_with($path, APP_BASE . '/')) {
-                $redirect_url = $path; // Already has /final/ prefix, use as-is
+                // Remove /final/ prefix since document root is /final/
+                $redirect_url = substr($path, strlen(APP_BASE));
             } else {
-                // Absolute path without /final/ - add it
-                $redirect_url = APP_BASE . $path;
+                // Absolute path without /final/ - use as-is (relative to document root)
+                $redirect_url = $path;
             }
         } else {
             // Relative path (e.g., 'index.php' or 'View/login.php')
-            // Always prepend /final/ to make it absolute from web root
-            $redirect_url = APP_BASE . '/' . ltrim($path, '/');
+            // Use as absolute from document root (which is /final/)
+            $redirect_url = '/' . ltrim($path, '/');
         }
         
         // Log for debugging (remove in production if needed)
