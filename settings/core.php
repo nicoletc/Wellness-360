@@ -31,7 +31,21 @@ function redirect(string $path): void {
     if (preg_match('~^https?://~i', $path)) {
         header('Location: ' . $path);
     } else {
-        header('Location: ' . app_url($path));
+        // For server-side redirects, assume document root is /final/
+        // If path is relative (e.g., 'index.php' or 'View/login.php'), use as-is
+        // If path starts with /, remove /final/ prefix if present
+        if (str_starts_with($path, '/')) {
+            // Absolute path - remove /final/ prefix if document root is /final/
+            if (str_starts_with($path, APP_BASE . '/')) {
+                $redirect_url = substr($path, strlen(APP_BASE));
+            } else {
+                $redirect_url = $path;
+            }
+        } else {
+            // Relative path - use as-is (document root is /final/)
+            $redirect_url = '/' . ltrim($path, '/');
+        }
+        header('Location: ' . $redirect_url);
     }
     exit;
 }

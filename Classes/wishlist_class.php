@@ -159,12 +159,26 @@ class wishlist_class extends db_connection
                 'message' => 'Product removed from wishlist successfully.'
             ];
         } else {
-            // No rows affected - product was not in wishlist
-            error_log("Wishlist: No rows affected - product not in wishlist");
-            return [
-                'status' => false,
-                'message' => 'Product is not in your wishlist.'
-            ];
+            // No rows affected - verify if product is actually in wishlist now
+            // This handles cases where the item was already removed or there's a timing issue
+            $verify_sql = "SELECT like_id FROM product_likes WHERE customer_id = $customer_id AND product_id = $product_id LIMIT 1";
+            $verify_result = $this->db_fetch_one($verify_sql);
+            
+            if (!$verify_result || empty($verify_result['like_id'])) {
+                // Product is not in wishlist - removal was successful (maybe already removed)
+                error_log("Wishlist: No rows affected but product not in wishlist - removal successful");
+                return [
+                    'status' => true,
+                    'message' => 'Product removed from wishlist successfully.'
+                ];
+            } else {
+                // Product is still in wishlist - deletion failed for some reason
+                error_log("Wishlist: No rows affected but product still in wishlist - deletion failed");
+                return [
+                    'status' => false,
+                    'message' => 'Failed to remove from wishlist. Please try again.'
+                ];
+            }
         }
     }
     
