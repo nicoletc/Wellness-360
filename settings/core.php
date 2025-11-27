@@ -69,6 +69,24 @@ function is_logged_in(): bool {
 }
 
 /* Admin helpers */
+/* Image path helper - normalizes image paths for display */
+function get_image_path(string $image_path): string {
+    // If path already starts with ../ or ../../, use as-is (already relative to View folder)
+    if (str_starts_with($image_path, '../') || str_starts_with($image_path, '../../')) {
+        return $image_path;
+    }
+    // If path starts with /, it's absolute - use as-is
+    if (str_starts_with($image_path, '/')) {
+        return $image_path;
+    }
+    // If path starts with uploads/, add ../ to make it relative to View folder
+    if (str_starts_with($image_path, 'uploads/')) {
+        return '../' . $image_path;
+    }
+    // Default: assume it's relative to View folder, add ../
+    return '../' . $image_path;
+}
+
 function get_new_message_count(): int {
     static $count = null;
     

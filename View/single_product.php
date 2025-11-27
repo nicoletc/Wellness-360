@@ -101,9 +101,9 @@ $placeholderImage = '../../uploads/placeholder.jpg';
                 <!-- Product Image -->
                 <div class="product-image-section">
                     <div class="product-main-image">
-                        <img src="../<?php echo htmlspecialchars($product['product_image'] ?: $placeholderImage); ?>" 
+                        <img src="<?php echo htmlspecialchars(get_image_path($product['product_image'] ?: $placeholderImage)); ?>" 
                              alt="<?php echo htmlspecialchars($product['product_title']); ?>"
-                             onerror="this.onerror=null; this.src='../<?php echo $placeholderImage; ?>';">
+                             onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_image_path($placeholderImage)); ?>';">
                     </div>
                 </div>
 

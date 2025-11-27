@@ -97,7 +97,7 @@ $placeholderImage = '../../uploads/placeholder.jpg';
                     <div class="checkout-items-list" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
                         <?php foreach ($cart_items as $item): ?>
                             <div class="checkout-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid #ddd; margin-bottom: 1rem;">
-                                <img src="../<?php echo htmlspecialchars($item['product_image'] ?: $placeholderImage); ?>" 
+                                <img src="<?php echo htmlspecialchars(get_image_path($item['product_image'] ?: $placeholderImage)); ?>" 
                                      alt="<?php echo htmlspecialchars($item['product_title']); ?>"
                                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
                                 <div style="flex: 1;">

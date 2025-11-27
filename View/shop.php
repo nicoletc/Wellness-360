@@ -308,7 +308,7 @@ $placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg'
                             <?php foreach ($products as $product): ?>
                                 <a href="single_product.php?id=<?php echo $product['product_id']; ?>" class="product-card">
                                     <div class="product-image-wrapper">
-                                        <img src="../<?php echo htmlspecialchars($product['product_image'] ?: $placeholderImage); ?>" 
+                                        <img src="<?php echo htmlspecialchars(get_image_path($product['product_image'] ?: $placeholderImage)); ?>" 
                                              alt="<?php echo htmlspecialchars($product['product_title']); ?>"
                                              onerror="this.onerror=null; this.src='../<?php echo $placeholderImage; ?>';">
                                         <button class="product-wishlist-btn wishlist-btn" 

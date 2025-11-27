@@ -122,7 +122,7 @@ $placeholderImage = '../../uploads/placeholder.jpg';
                                     <tr data-product-id="<?php echo $item['product_id']; ?>" style="border-bottom: 1px solid #eee;">
                                         <td style="padding: 1rem;">
                                             <div style="display: flex; align-items: center; gap: 1rem;">
-                                                <img src="../<?php echo htmlspecialchars($item['product_image'] ?: $placeholderImage); ?>" 
+                                                <img src="<?php echo htmlspecialchars(get_image_path($item['product_image'] ?: $placeholderImage)); ?>" 
                                                      alt="<?php echo htmlspecialchars($item['product_title']); ?>"
                                                      style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
                                                 <div>
