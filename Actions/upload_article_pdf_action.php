@@ -114,7 +114,29 @@ try {
     
     $articleIdEscaped = (int)$articleId;
     
+    // Check column type first to ensure it's LONGBLOB
+    $column_check = "SHOW COLUMNS FROM articles WHERE Field = 'article_body'";
+    $column_info = $db->db_fetch_one($column_check);
+    $column_type = $column_info['Type'] ?? 'NOT FOUND';
+    error_log("Upload PDF: Column type for article_body: " . $column_type);
+    
+    // Verify it's a BLOB type
+    if (stripos($column_type, 'blob') === false && stripos($column_type, 'binary') === false) {
+        error_log("Upload PDF: WARNING - article_body column type is '$column_type', expected LONGBLOB or similar BLOB type");
+        // Continue anyway - might still work
+    }
+    
     // Use prepared statement for binary data
+    // First, set article_body to NULL to ensure clean state
+    $null_stmt = mysqli_prepare($db->db, "UPDATE articles SET article_body = NULL WHERE article_id = ?");
+    if ($null_stmt) {
+        mysqli_stmt_bind_param($null_stmt, "i", $articleIdEscaped);
+        mysqli_stmt_execute($null_stmt);
+        mysqli_stmt_close($null_stmt);
+        error_log("Upload PDF: Set article_body to NULL before upload");
+    }
+    
+    // Now prepare the update statement
     $stmt = mysqli_prepare($db->db, "UPDATE articles SET article_body = ? WHERE article_id = ?");
     if (!$stmt) {
         http_response_code(500);
@@ -124,10 +146,11 @@ try {
         exit;
     }
     
-    // Bind parameters: 's' for string/blob, 'i' for integer
-    // For blob, we bind an empty string first, then send the data in chunks
-    $blob = '';
-    if (!mysqli_stmt_bind_param($stmt, "si", $blob, $articleIdEscaped)) {
+    // Bind parameters: Bind as string/blob type ('s')
+    // For send_long_data to work, we need to bind an empty string, not NULL
+    // MySQLi will recognize it as a blob when we use send_long_data
+    $blob_param = '';
+    if (!mysqli_stmt_bind_param($stmt, "si", $blob_param, $articleIdEscaped)) {
         http_response_code(500);
         $error = mysqli_stmt_error($stmt);
         error_log("Upload PDF: Failed to bind parameters - " . $error);
@@ -142,18 +165,30 @@ try {
     $offset = 0;
     $totalLength = strlen($pdfContent);
     
+    error_log("Upload PDF: Starting to send $totalLength bytes in chunks of $chunkSize");
+    
+    // Send all chunks
     while ($offset < $totalLength) {
         $chunk = substr($pdfContent, $offset, $chunkSize);
-        if (!mysqli_stmt_send_long_data($stmt, 0, $chunk)) {
-            http_response_code(500);
-            $error = mysqli_stmt_error($stmt);
-            error_log("Upload PDF: Failed to send binary data chunk at offset $offset - " . $error);
-            echo json_encode(['status'=>'error','message'=>'Failed to send binary data: ' . $error]);
-            mysqli_stmt_close($stmt);
-            exit;
+        $chunkLength = strlen($chunk);
+        
+        if ($chunkLength > 0) {
+            // Use send_long_data to send chunk (parameter index 0 = first ? placeholder)
+            $send_result = mysqli_stmt_send_long_data($stmt, 0, $chunk);
+            if (!$send_result) {
+                http_response_code(500);
+                $error = mysqli_stmt_error($stmt);
+                error_log("Upload PDF: Failed to send binary data chunk at offset $offset (length: $chunkLength) - " . $error);
+                error_log("Upload PDF: MySQL error: " . mysqli_error($db->db));
+                echo json_encode(['status'=>'error','message'=>'Failed to send binary data: ' . $error]);
+                mysqli_stmt_close($stmt);
+                exit;
+            }
         }
         $offset += $chunkSize;
     }
+    
+    error_log("Upload PDF: Finished sending all chunks. Total sent: $offset bytes");
     
     // Execute the statement
     if (!mysqli_stmt_execute($stmt)) {
