@@ -91,7 +91,7 @@
             <!-- Right Panel - Image -->
             <div class="register-image-panel">
                 <div class="image-content">
-                    <img src="../../uploads/placeholder.jpg" alt="Wellness Lifestyle" class="register-image reveal">
+                    <img src="../../uploads/signup.png" alt="Wellness Lifestyle" class="register-image reveal">
                 </div>
             </div>
         </div>

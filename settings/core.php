@@ -13,11 +13,7 @@ function get_base_path(): string {
     if ($base_path === null) {
         // Get the script directory relative to document root
         $script_dir = dirname($_SERVER['SCRIPT_NAME']);
-        
-        // Remove /final and any subdirectories (Admin, View, etc.) to get the true base path
-        // Example: /~nicole.tracy.clottey/final/Admin/articles.php -> /~nicole.tracy.clottey
-        // Example: /~nicole.tracy.clottey/final/View/login.php -> /~nicole.tracy.clottey
-        // Example: /final/index.php -> /
+
         
         // Remove /final and everything after it
         $script_dir = preg_replace('#/final.*$#', '', $script_dir);
