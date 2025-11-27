@@ -11,7 +11,7 @@ const APP_BASE   = '/final';
 const PATH_LOGIN = 'View/login.php';
 const PATH_REGISTER = 'View/register.php';
 const PATH_HOME  = 'index.php';
-const PATH_ADMIN = 'admin/overview.php';
+const PATH_ADMIN = 'Admin/overview.php';
 
 /* Session keys & roles */
 const SESS_USER_ID   = 'customer_id';
