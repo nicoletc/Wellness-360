@@ -382,3 +382,50 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
+### Table Rename Migration
+```sql
+-- =====================================================
+-- Table Rename Script for Wellness 360 Database
+-- Run this script in phpMyAdmin to rename tables
+-- =====================================================
+-- 
+-- IMPORTANT: 
+-- 1. Backup your database before running this script
+-- 2. Run these commands one at a time or all together
+-- 3. Make sure no one is using the database while renaming
+-- =====================================================
+
+-- Rename customer to customers
+RENAME TABLE `customer` TO `customers`;
+
+-- Rename products to customer_products
+RENAME TABLE `products` TO `customer_products`;
+
+-- Rename cart to carts
+RENAME TABLE `cart` TO `carts`;
+
+-- Rename orders to customer_orders
+RENAME TABLE `orders` TO `customer_orders`;
+
+-- Rename payment to payments
+RENAME TABLE `payment` TO `payments`;
+
+-- Rename orderdetails to order_details
+RENAME TABLE `orderdetails` TO `order_details`;
+```
+
+### Add Article Image Column Migration
+```sql
+-- Add article_image column to articles table
+-- Run this in phpMyAdmin or your MySQL client
+
+ALTER TABLE articles 
+ADD COLUMN article_image VARCHAR(255) NULL 
+AFTER article_body;
+
+-- Add comment for documentation
+ALTER TABLE articles 
+MODIFY COLUMN article_image VARCHAR(255) NULL 
+COMMENT 'Path to article image (e.g., ../../uploads/u1/a1/image_1.jpg)';
+```
+
