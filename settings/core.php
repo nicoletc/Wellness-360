@@ -43,7 +43,7 @@ const SESS_USER_ROLE = 'user_role';
 const ROLE_ADMIN     = 1;
 const ROLE_CUSTOMER  = 2;
 
-/* URL helper */
+/* URL helper - returns path only */
 function app_url(string $path): string {
     // Get the base path dynamically (includes user home if present)
     $base_path = get_base_path();
@@ -61,6 +61,21 @@ function app_url(string $path): string {
         // Relative path - add base path + /final/ + path
         return $base_path . APP_BASE . '/' . ltrim($path, '/');
     }
+}
+
+/* Full URL helper - returns complete URL with protocol and domain (for JavaScript) */
+function app_full_url(string $path): string {
+    // Determine protocol
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    
+    // Get host (domain or IP)
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+    
+    // Get the path from app_url
+    $url_path = app_url($path);
+    
+    // Construct full URL
+    return $protocol . '://' . $host . $url_path;
 }
 
 /* Redirect helper */

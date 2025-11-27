@@ -26,8 +26,7 @@ $cart_total = $cart_controller->get_cart_total_ctr();
 
 // Redirect to cart if empty
 if (empty($cart_items)) {
-    header('Location: cart.php');
-    exit;
+    redirect('View/cart.php');
 }
 
 $placeholderImage = '../../uploads/placeholder.jpg';
