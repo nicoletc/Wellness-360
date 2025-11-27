@@ -126,83 +126,35 @@ try {
         // Continue anyway - might still work
     }
     
-    // Use prepared statement for binary data
+    // Use hex encoding approach for LONGBLOB - more reliable than send_long_data
     // First, set article_body to NULL to ensure clean state
-    $null_stmt = mysqli_prepare($db->db, "UPDATE articles SET article_body = NULL WHERE article_id = ?");
-    if ($null_stmt) {
-        mysqli_stmt_bind_param($null_stmt, "i", $articleIdEscaped);
-        mysqli_stmt_execute($null_stmt);
-        mysqli_stmt_close($null_stmt);
-        error_log("Upload PDF: Set article_body to NULL before upload");
-    }
+    $null_sql = "UPDATE articles SET article_body = NULL WHERE article_id = $articleIdEscaped";
+    $db->db_query($null_sql);
+    error_log("Upload PDF: Set article_body to NULL before upload");
     
-    // Now prepare the update statement
-    $stmt = mysqli_prepare($db->db, "UPDATE articles SET article_body = ? WHERE article_id = ?");
-    if (!$stmt) {
+    // Convert binary data to hex string for safe storage
+    $hexData = bin2hex($pdfContent);
+    $hexDataEscaped = $db->escape_string($hexData);
+    
+    error_log("Upload PDF: Converted PDF to hex. Original size: $pdfSize bytes, Hex size: " . strlen($hexData) . " bytes");
+    
+    // Use UNHEX() function to convert hex back to binary when storing
+    // This avoids the send_long_data issue entirely
+    $sql = "UPDATE articles SET article_body = UNHEX('$hexDataEscaped') WHERE article_id = $articleIdEscaped";
+    
+    error_log("Upload PDF: Executing UPDATE with UNHEX()");
+    $result = $db->db_query($sql);
+    
+    if (!$result) {
         http_response_code(500);
         $error = mysqli_error($db->db);
-        error_log("Upload PDF: Failed to prepare statement - " . $error);
-        echo json_encode(['status'=>'error','message'=>'Failed to prepare statement: ' . $error]);
+        error_log("Upload PDF: UPDATE failed - " . $error);
+        echo json_encode(['status'=>'error','message'=>'Failed to update database: ' . $error]);
         exit;
     }
     
-    // Bind parameters: Bind as string/blob type ('s')
-    // For send_long_data to work, we need to bind an empty string, not NULL
-    // MySQLi will recognize it as a blob when we use send_long_data
-    $blob_param = '';
-    if (!mysqli_stmt_bind_param($stmt, "si", $blob_param, $articleIdEscaped)) {
-        http_response_code(500);
-        $error = mysqli_stmt_error($stmt);
-        error_log("Upload PDF: Failed to bind parameters - " . $error);
-        echo json_encode(['status'=>'error','message'=>'Failed to bind parameters: ' . $error]);
-        mysqli_stmt_close($stmt);
-        exit;
-    }
-    
-    // Send the binary data in chunks (parameter index 0 is the first ? which is article_body)
-    // Send data in 8192 byte chunks to avoid memory issues
-    $chunkSize = 8192;
-    $offset = 0;
-    $totalLength = strlen($pdfContent);
-    
-    error_log("Upload PDF: Starting to send $totalLength bytes in chunks of $chunkSize");
-    
-    // Send all chunks
-    while ($offset < $totalLength) {
-        $chunk = substr($pdfContent, $offset, $chunkSize);
-        $chunkLength = strlen($chunk);
-        
-        if ($chunkLength > 0) {
-            // Use send_long_data to send chunk (parameter index 0 = first ? placeholder)
-            $send_result = mysqli_stmt_send_long_data($stmt, 0, $chunk);
-            if (!$send_result) {
-                http_response_code(500);
-                $error = mysqli_stmt_error($stmt);
-                error_log("Upload PDF: Failed to send binary data chunk at offset $offset (length: $chunkLength) - " . $error);
-                error_log("Upload PDF: MySQL error: " . mysqli_error($db->db));
-                echo json_encode(['status'=>'error','message'=>'Failed to send binary data: ' . $error]);
-                mysqli_stmt_close($stmt);
-                exit;
-            }
-        }
-        $offset += $chunkSize;
-    }
-    
-    error_log("Upload PDF: Finished sending all chunks. Total sent: $offset bytes");
-    
-    // Execute the statement
-    if (!mysqli_stmt_execute($stmt)) {
-        http_response_code(500);
-        $error = mysqli_stmt_error($stmt);
-        error_log("Upload PDF: Failed to execute statement - " . $error);
-        error_log("Upload PDF: SQL Error: " . mysqli_error($db->db));
-        echo json_encode(['status'=>'error','message'=>'Failed to execute statement: ' . $error]);
-        mysqli_stmt_close($stmt);
-        exit;
-    }
-    
-    $affected_rows = mysqli_stmt_affected_rows($stmt);
-    mysqli_stmt_close($stmt);
+    $affected_rows = mysqli_affected_rows($db->db);
+    error_log("Upload PDF: UPDATE executed. Affected rows: $affected_rows");
     
     error_log("Upload PDF: Statement executed. Affected rows: $affected_rows, Article ID: $articleIdEscaped, Expected PDF size: $pdfSize bytes");
     
@@ -261,47 +213,31 @@ try {
         
         error_log("Upload PDF: Final error - " . $error_msg);
         
-        // Try alternative approach: Set to NULL first, then update
-        error_log("Upload PDF: Attempting alternative update method...");
-        $alt_stmt = mysqli_prepare($db->db, "UPDATE articles SET article_body = NULL WHERE article_id = ?");
-        if ($alt_stmt) {
-            mysqli_stmt_bind_param($alt_stmt, "i", $articleIdEscaped);
-            mysqli_stmt_execute($alt_stmt);
-            mysqli_stmt_close($alt_stmt);
-            error_log("Upload PDF: Set article_body to NULL");
-        }
+        // Try alternative approach: Use hex encoding again (in case first attempt had issues)
+        error_log("Upload PDF: Attempting alternative update method with hex encoding...");
         
-        // Now try the update again
-        $retry_stmt = mysqli_prepare($db->db, "UPDATE articles SET article_body = ? WHERE article_id = ?");
-        if ($retry_stmt) {
-            $retry_blob = '';
-            mysqli_stmt_bind_param($retry_stmt, "si", $retry_blob, $articleIdEscaped);
-            
-            // Send data in chunks again
-            $retry_offset = 0;
-            while ($retry_offset < $totalLength) {
-                $retry_chunk = substr($pdfContent, $retry_offset, $chunkSize);
-                mysqli_stmt_send_long_data($retry_stmt, 0, $retry_chunk);
-                $retry_offset += $chunkSize;
+        // Set to NULL first
+        $db->db_query("UPDATE articles SET article_body = NULL WHERE article_id = $articleIdEscaped");
+        
+        // Try with hex encoding again
+        $retry_hex = bin2hex($pdfContent);
+        $retry_hex_escaped = $db->escape_string($retry_hex);
+        $retry_sql = "UPDATE articles SET article_body = UNHEX('$retry_hex_escaped') WHERE article_id = $articleIdEscaped";
+        
+        if ($db->db_query($retry_sql)) {
+            // Re-verify
+            $retry_verify = $db->db_fetch_one($verify_sql);
+            if ($retry_verify && isset($retry_verify['pdf_size']) && $retry_verify['pdf_size'] > 0) {
+                error_log("Upload PDF: Retry SUCCESS - PDF stored. Size: " . $retry_verify['pdf_size'] . " bytes");
+                echo json_encode([
+                    'status'=>'success',
+                    'message'=>'PDF uploaded and stored in database (retry succeeded).',
+                    'article_id'=>$articleId, 
+                    'pdf_size'=>$retry_verify['pdf_size'],
+                    'affected_rows'=>mysqli_affected_rows($db->db)
+                ]);
+                exit;
             }
-            
-            if (mysqli_stmt_execute($retry_stmt)) {
-                // Re-verify
-                $retry_verify = $db->db_fetch_one($verify_sql);
-                if ($retry_verify && isset($retry_verify['pdf_size']) && $retry_verify['pdf_size'] > 0) {
-                    error_log("Upload PDF: Retry SUCCESS - PDF stored. Size: " . $retry_verify['pdf_size'] . " bytes");
-                    echo json_encode([
-                        'status'=>'success',
-                        'message'=>'PDF uploaded and stored in database (retry succeeded).',
-                        'article_id'=>$articleId, 
-                        'pdf_size'=>$retry_verify['pdf_size'],
-                        'affected_rows'=>mysqli_stmt_affected_rows($retry_stmt)
-                    ]);
-                    mysqli_stmt_close($retry_stmt);
-                    exit;
-                }
-            }
-            mysqli_stmt_close($retry_stmt);
         }
         
         echo json_encode([
