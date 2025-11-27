@@ -404,6 +404,7 @@ async function handleAddArticle(e) {
     const articleTitle = form.querySelector('[name="article_title"]').value.trim();
     const articleAuthor = form.querySelector('[name="article_author"]').value.trim();
     const articleCat = form.querySelector('[name="article_cat"]').value;
+    const imageFile = form.querySelector('[name="article_image"]')?.files[0];
     const pdfFile = form.querySelector('[name="article_pdf"]').files[0];
 
     // Validation

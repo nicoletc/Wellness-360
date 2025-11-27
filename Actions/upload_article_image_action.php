@@ -120,13 +120,25 @@ try {
     }
     
     $sql = "UPDATE articles SET article_image = '$relativeEscaped' WHERE article_id = $articleIdEscaped";
+    
+    // Log the SQL for debugging
+    error_log("Article image upload SQL: " . $sql);
+    error_log("Article ID: " . $articleIdEscaped);
+    error_log("Image path: " . $relativeEscaped);
+    
     $result = $db->db_query($sql);
     
     if ($result) {
+        // Verify the update worked
+        $verifySql = "SELECT article_image FROM articles WHERE article_id = $articleIdEscaped";
+        $verifyResult = $db->db_fetch_one($verifySql);
+        error_log("Article image after update: " . ($verifyResult['article_image'] ?? 'NULL'));
+        
         echo json_encode(['status'=>'success','path'=>$relative,'image_path'=>$relative,'article_id'=>$articleId]);
     } else {
         http_response_code(500);
         $error = mysqli_error($db->db);
+        error_log("Article image DB update failed: " . ($error ?: 'Unknown error'));
         echo json_encode(['status'=>'error','message'=>'DB update failed: ' . ($error ?: 'Unknown error')]);
     }
 } catch (Throwable $e) {

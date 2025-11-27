@@ -104,7 +104,7 @@ $placeholderImage = '../../uploads/placeholder.jpg';
             </nav>
 
             <!-- Article Image -->
-            <?php if (!empty($article['image']) && $article['image'] !== '../../uploads/placeholder.jpg'): ?>
+            <?php if (!empty($article['image']) && $article['image'] !== '../../uploads/placeholder.jpg' && $article['image'] !== '../uploads/placeholder.jpg'): ?>
                 <div class="article-featured-image">
                     <img src="<?php echo htmlspecialchars(get_image_path($article['image'])); ?>" 
                          alt="<?php echo htmlspecialchars($article['title']); ?>"
