@@ -264,7 +264,7 @@ class ProfileModel extends db_connection {
         $activitySummary = $activityModel->getUserActivitySummary($customer_id, 30);
         
         // Get products user has viewed but not purchased
-        $viewed_products_sql = "SELECT DISTINCT ua.content_id as product_id
+        $viewed_products_sql = "SELECT DISTINCT ua.content_id as product_id, ua.viewed_at
                                FROM user_activity ua
                                LEFT JOIN customer_orders o ON o.customer_id = $customer_id
                                LEFT JOIN order_details od ON o.order_id = od.order_id AND od.product_id = ua.content_id

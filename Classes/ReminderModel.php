@@ -251,7 +251,7 @@ class ReminderModel extends db_connection
         }
         
         // Get products user viewed but didn't purchase (in last 7 days)
-        $sql = "SELECT DISTINCT ua.content_id as product_id, p.product_title, c.cat_name
+        $sql = "SELECT DISTINCT ua.content_id as product_id, ua.viewed_at, p.product_title, c.cat_name
                 FROM user_activity ua
                 INNER JOIN customer_products p ON ua.content_id = p.product_id
                 LEFT JOIN category c ON p.product_cat = c.cat_id
