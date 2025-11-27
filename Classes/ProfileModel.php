@@ -26,8 +26,8 @@ class ProfileModel extends db_connection {
             'recommendedContent' => $recommendedContent ?? [],
             'orders' => $orders ?? [],
             'favorites' => $favorites ?? [],
-            'placeholderImage' => $placeholderImage ?? 'uploads/placeholder.jpg',
-            'placeholderAvatar' => $placeholderAvatar ?? 'uploads/placeholder_avatar.jpg',
+            'placeholderImage' => $placeholderImage ?? '../../uploads/placeholder.jpg',
+            'placeholderAvatar' => $placeholderAvatar ?? '../../uploads/placeholder_avatar.jpg',
         ];
     }
     
@@ -176,7 +176,7 @@ class ProfileModel extends db_connection {
                 'product_id' => (int)$item['product_id'],
                 'title' => $item['product_title'],
                 'price' => floatval($item['product_price']),
-                'image' => $item['product_image'] ?: 'uploads/placeholder.jpg',
+                'image' => $item['product_image'] ?: '../../uploads/placeholder.jpg',
                 'date' => date('F j, Y', strtotime($item['created_at'])),
             ];
         }
@@ -296,7 +296,7 @@ class ProfileModel extends db_connection {
                 'title' => $product['product_title'],
                 'description' => substr($product['product_desc'] ?? 'Quality wellness product', 0, 100) . '...',
                 'price' => floatval($product['product_price']),
-                'image' => $product['product_image'] ?: 'uploads/placeholder.jpg',
+                'image' => $product['product_image'] ?: '../../uploads/placeholder.jpg',
                 'category' => $product['cat_name'] ?? 'Products',
                 'type' => 'product'
             ];
@@ -326,7 +326,7 @@ class ProfileModel extends db_connection {
                 'title' => $article['article_title'],
                 'description' => 'Based on your interest in ' . ($article['cat_name'] ?? 'wellness') . ' topics',
                 'date' => date('Y-m-d', strtotime($article['date_added'])),
-                'image' => 'uploads/placeholder.jpg',
+                'image' => '../../uploads/placeholder.jpg',
                 'category' => $article['cat_name'] ?? 'Articles',
                 'type' => 'article'
             ];

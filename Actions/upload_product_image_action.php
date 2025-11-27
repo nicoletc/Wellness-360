@@ -40,7 +40,7 @@ if (!isset($_FILES['product_image']) || $_FILES['product_image']['error'] !== UP
 }
 
 // ---- Paths & security: only inside /uploads ----
-$uploadsRoot = realpath(__DIR__ . '/../uploads');   // folder already exists (per assignment)
+$uploadsRoot = realpath(__DIR__ . '/../../uploads');   // folder already exists (per assignment)
 if ($uploadsRoot === false) {
     http_response_code(500);
     echo json_encode(['status'=>'error','message'=>'Uploads folder missing.']);
@@ -90,7 +90,7 @@ if (!move_uploaded_file($_FILES['product_image']['tmp_name'], $destAbs)) {
 }
 
 // Store RELATIVE path in DB
-$relative = "uploads/u{$userId}/p{$productId}/image_{$next}.{$ext}";
+$relative = "../../uploads/u{$userId}/p{$productId}/image_{$next}.{$ext}";
 
 try {
     $db = new db_connection();

@@ -33,7 +33,7 @@ $controller->record_view($article_id);
 // Get updated article data with new view count
 $article = $controller->get_article($article_id);
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">

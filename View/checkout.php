@@ -30,7 +30,7 @@ if (empty($cart_items)) {
     exit;
 }
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">

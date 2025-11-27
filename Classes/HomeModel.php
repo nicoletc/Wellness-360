@@ -45,7 +45,7 @@ class HomeModel extends db_connection
                 'title' => $article['article_title'],
                 'category' => $article['category_name'] ?? 'Uncategorized',
                 'author' => $article['article_author'],
-                'image' => 'uploads/placeholder.jpg', // Default placeholder
+                'image' => '../../uploads/placeholder.jpg', // Default placeholder
                 'readTime' => $readTime,
                 'article_id' => (int)$article['article_id']
             ];
@@ -105,7 +105,7 @@ class HomeModel extends db_connection
                 'vendor' => $product['vendor_name'] ?? 'Unknown Vendor',
                 'price' => '₵' . number_format((float)$product['product_price'], 2),
                 'rating' => 4.5, // Default rating (can be calculated from reviews if available)
-                'image' => !empty($product['product_image']) ? $product['product_image'] : 'uploads/placeholder.jpg',
+                'image' => !empty($product['product_image']) ? $product['product_image'] : '../../uploads/placeholder.jpg',
                 'verified' => true, // All products are considered verified
                 'product_id' => (int)$product['product_id']
             ];

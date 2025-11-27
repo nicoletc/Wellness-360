@@ -67,7 +67,7 @@ class CommunityModel extends db_connection {
         $discussions = [];
         $challenges = [];
         $workshops = [];
-        $placeholderImage = 'uploads/placeholder.jpg';
+        $placeholderImage = '../../uploads/placeholder.jpg';
         
         require $this->dataFile;
         
@@ -77,7 +77,7 @@ class CommunityModel extends db_connection {
             'discussions' => $discussions ?? [],
             'challenges' => $challenges ?? [],
             'workshops' => $workshops ?? [],
-            'placeholderImage' => $placeholderImage ?? 'uploads/placeholder.jpg',
+            'placeholderImage' => $placeholderImage ?? '../../uploads/placeholder.jpg',
         ];
     }
     
@@ -175,13 +175,17 @@ class CommunityModel extends db_connection {
             }
             
             // Get image path - ensure it's relative to the View folder
-            $image = 'uploads/placeholder.jpg';
+            $image = '../../uploads/placeholder.jpg';
             if (!empty($workshop['workshop_image'])) {
-                // If image path doesn't start with uploads/, add it
-                if (strpos($workshop['workshop_image'], 'uploads/') === 0) {
+                // If image path doesn't start with ../uploads/, add it
+                if (strpos($workshop['workshop_image'], '../uploads/') === 0 || strpos($workshop['workshop_image'], '../../uploads/') === 0) {
+                    // Already has correct prefix
                     $image = $workshop['workshop_image'];
+                } else if (strpos($workshop['workshop_image'], 'uploads/') === 0) {
+                    // Has old uploads/ prefix, convert to ../../uploads/
+                    $image = '../../uploads/' . substr($workshop['workshop_image'], 8);
                 } else {
-                    $image = 'uploads/' . ltrim($workshop['workshop_image'], '/');
+                    $image = '../../uploads/' . ltrim($workshop['workshop_image'], '/');
                 }
             }
             
@@ -394,7 +398,7 @@ class CommunityModel extends db_connection {
             $replyCount = isset($reply_counts[$discussion['comm_id']]) ? $reply_counts[$discussion['comm_id']] : 0;
             
             // All posts are anonymous - use generic placeholder
-            $authorImage = 'uploads/placeholder.jpg';
+            $authorImage = '../../uploads/placeholder.jpg';
             
             $formatted[] = [
                 'id' => $discussion['comm_id'],
@@ -527,7 +531,7 @@ class CommunityModel extends db_connection {
             }
             
             // All replies are anonymous - use generic placeholder
-            $authorImage = 'uploads/placeholder.jpg';
+            $authorImage = '../../uploads/placeholder.jpg';
             
             $formatted[] = [
                 'id' => $reply['reply_id'],

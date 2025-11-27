@@ -62,8 +62,8 @@ require_once 'Functions/get_cart_count.php';
 
     <?php
     // Include image paths and features from home_data.php first
-    $heroImage = 'uploads/index.png';
-    $placeholderImage = 'uploads/placeholder.jpg';
+    $heroImage = '../uploads/index.png';
+    $placeholderImage = '../uploads/placeholder.jpg';
     
     // Features data array (static content)
     $features = [

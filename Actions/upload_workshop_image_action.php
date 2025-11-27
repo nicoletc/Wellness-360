@@ -40,7 +40,7 @@ if (!isset($_FILES['workshop_image']) || $_FILES['workshop_image']['error'] !== 
 }
 
 // ---- Paths & security: only inside /uploads ----
-$uploadsRoot = realpath(__DIR__ . '/../uploads');
+$uploadsRoot = realpath(__DIR__ . '/../../uploads');
 if ($uploadsRoot === false) {
     http_response_code(500);
     echo json_encode(['status'=>'error','message'=>'Uploads folder missing.']);
@@ -94,7 +94,7 @@ if (!move_uploaded_file($_FILES['workshop_image']['tmp_name'], $targetPath)) {
 }
 
 // Relative path for database
-$relativePath = 'uploads/u' . $userId . '/w' . $workshopId . '/' . $filename;
+$relativePath = '../../uploads/u' . $userId . '/w' . $workshopId . '/' . $filename;
 
 // Update database
 $db = new db_connection();

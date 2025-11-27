@@ -4,8 +4,8 @@
  * Contains placeholder data for profile page
  */
 
-$placeholderImage = 'uploads/placeholder.jpg';
-$placeholderAvatar = 'uploads/placeholder_avatar.jpg';
+$placeholderImage = '../uploads/placeholder.jpg';
+$placeholderAvatar = '../uploads/placeholder_avatar.jpg';
 
 // User statistics (will be replaced with actual data from database)
 $userStats = [

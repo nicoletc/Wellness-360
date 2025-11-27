@@ -4,7 +4,7 @@
  * Contains all data arrays for the wellness hub page
  */
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../uploads/placeholder.jpg';
 
 // Categories for filtering
 $categories = [

@@ -73,7 +73,7 @@ function displayOrderModal(data) {
                     <img src="../${item.product_image}" 
                          alt="${item.product_title}" 
                          style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"
-                         onerror="this.src='../uploads/placeholder.jpg';">
+                         onerror="this.src='../../uploads/placeholder.jpg';">
                     <div style="flex: 1;">
                         <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">${item.product_title}</h4>
                         <p style="margin: 0; color: #666; font-size: 0.9rem;">

@@ -24,7 +24,7 @@ class AboutModel {
             'storyBehind' => $storyBehind ?? [],
             'coreValues' => $coreValues ?? [],
             'cta' => $cta ?? [],
-            'placeholderImage' => $placeholderImage ?? 'uploads/placeholder.jpg',
+            'placeholderImage' => $placeholderImage ?? '../../uploads/placeholder.jpg',
         ];
     }
 }

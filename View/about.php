@@ -21,7 +21,7 @@ $vision = $data['vision'] ?? [];
 $storyBehind = $data['storyBehind'] ?? [];
 $coreValues = $data['coreValues'] ?? [];
 $cta = $data['cta'] ?? [];
-$placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
+$placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -4,7 +4,7 @@
  * Contains all data arrays for the about page
  */
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../uploads/placeholder.jpg';
 
 // Our Story Section
 $ourStory = [
@@ -36,7 +36,7 @@ $storyBehind = [
         'Today, Wellness 360 serves over 5,000 Ghanaians with evidence-based content, 50+ verified vendors, and a thriving community of wellness enthusiasts.',
         'Our journey has just begun, and we\'re committed to making wellness accessible, affordable, and authentic for every Ghanaian.',
     ],
-    'image' => 'uploads/about.png',
+    'image' => '../uploads/about.png',
 ];
 
 // Core Values

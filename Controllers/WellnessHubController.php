@@ -45,7 +45,7 @@ class WellnessHubController {
                         'date' => date('M d, Y', strtotime($article['date_added'])),
                         'views' => (int)($article['view_count'] ?? 0),
                         'has_pdf' => (bool)($article['has_pdf'] ?? false),
-                        'image' => 'uploads/placeholder.jpg' // Placeholder for now
+                        'image' => '../../uploads/placeholder.jpg' // Placeholder for now
                     ];
                 }
             }
@@ -55,7 +55,7 @@ class WellnessHubController {
                 'articles' => $formatted_articles,
                 'selectedCategory' => $selectedCategory,
                 'searchQuery' => $searchQuery,
-                'placeholderImage' => 'uploads/placeholder.jpg'
+                'placeholderImage' => '../../uploads/placeholder.jpg'
             ];
         } catch (Exception $e) {
             // Return empty data on error
@@ -64,7 +64,7 @@ class WellnessHubController {
                 'articles' => [],
                 'selectedCategory' => 'all',
                 'searchQuery' => '',
-                'placeholderImage' => 'uploads/placeholder.jpg',
+                'placeholderImage' => '../../uploads/placeholder.jpg',
                 'error' => $e->getMessage()
             ];
         }

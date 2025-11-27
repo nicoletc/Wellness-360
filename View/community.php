@@ -37,7 +37,7 @@ $discussions = $data['discussions'] ?? [];
 $workshops = $data['workshops'] ?? [];
 $selectedTab = $data['selectedTab'] ?? 'discussions';
 $selectedCategory = $data['selectedCategory'] ?? 'all';
-$placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
+$placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg';
 $placeholderAvatar = $placeholderImage; // Use same placeholder for avatars
 
 // Debug: Log data (remove in production)

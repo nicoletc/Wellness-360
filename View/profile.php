@@ -34,8 +34,8 @@ $reminderPreferences = $data['reminderPreferences'] ?? null;
 $categories = $data['categories'] ?? [];
 $activeTab = $data['activeTab'] ?? 'orders';
 $memberSince = $data['memberSince'] ?? 'Recently';
-$placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
-$placeholderAvatar = $data['placeholderAvatar'] ?? 'uploads/placeholder_avatar.jpg';
+$placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg';
+$placeholderAvatar = $data['placeholderAvatar'] ?? '../../uploads/placeholder_avatar.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -323,7 +323,7 @@ $placeholderAvatar = $data['placeholderAvatar'] ?? 'uploads/placeholder_avatar.j
                                                 <div class="favorite-image">
                                                     <img src="../<?php echo htmlspecialchars($item['image']); ?>" 
                                                          alt="<?php echo htmlspecialchars($item['title']); ?>"
-                                                         onerror="this.onerror=null; this.src='../uploads/placeholder.jpg';">
+                                                         onerror="this.onerror=null; this.src='../../uploads/placeholder.jpg';">
                                                 </div>
                                                 <div class="favorite-content">
                                                     <h3 class="favorite-title"><?php echo htmlspecialchars($item['title']); ?></h3>

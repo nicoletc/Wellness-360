@@ -26,7 +26,7 @@ $maxPrice = $data['maxPrice'] ?? $priceRange['max'];
 $searchQuery = $data['searchQuery'] ?? '';
 $sortBy = $data['sortBy'] ?? 'date';
 $pagination = $data['pagination'] ?? ['page' => 1, 'limit' => 10, 'total' => 0, 'total_pages' => 1];
-$placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
+$placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,7 +101,7 @@ $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
     $maxPrice = $data['maxPrice'] ?? $priceRange['max'];
     $searchQuery = $data['searchQuery'] ?? '';
     $sortBy = $data['sortBy'] ?? 'featured';
-    $placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
+    $placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg';
     ?>
 
     <!-- Shop Header -->

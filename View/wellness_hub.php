@@ -23,7 +23,7 @@ $categories = $data['categories'] ?? [];
 $articles = $data['articles'] ?? [];
 $selectedCategory = $data['selectedCategory'] ?? 'all';
 $searchQuery = $data['searchQuery'] ?? '';
-$placeholderImage = $data['placeholderImage'] ?? 'uploads/placeholder.jpg';
+$placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">

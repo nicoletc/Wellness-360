@@ -73,7 +73,7 @@ class ShopController {
                 'total' => $total,
                 'total_pages' => ceil($total / $limit)
             ],
-            'placeholderImage' => 'uploads/placeholder.jpg'
+            'placeholderImage' => '../../uploads/placeholder.jpg'
         ];
     }
     

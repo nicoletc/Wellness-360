@@ -4,7 +4,7 @@
  * Contains all data arrays for the community page
  */
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../uploads/placeholder.jpg';
 
 // Statistics
 $stats = [

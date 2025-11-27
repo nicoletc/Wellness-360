@@ -184,7 +184,7 @@ function displayReplies(discussionId, replies) {
         html += `
             <div class="reply-item">
                 <div class="reply-author">
-                    <img src="../${reply.authorImage || 'uploads/placeholder.jpg'}" 
+                    <img src="${reply.authorImage || '../../uploads/placeholder.jpg'}" 
                          alt="Anonymous"
                          class="reply-avatar"
                          onerror="this.onerror=null; this.style.display='none';">

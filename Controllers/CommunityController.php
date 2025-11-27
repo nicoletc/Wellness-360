@@ -95,7 +95,7 @@ class CommunityController {
                 'workshops' => [],
                 'selectedTab' => 'discussions',
                 'selectedCategory' => 'all',
-                'placeholderImage' => 'uploads/placeholder.jpg',
+                'placeholderImage' => '../../uploads/placeholder.jpg',
             ];
         }
     }

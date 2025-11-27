@@ -55,9 +55,9 @@ function updateSearchResults(products) {
     productsGrid.innerHTML = products.map(product => `
         <a href="single_product.php?id=${product.product_id}" class="product-card">
             <div class="product-image-wrapper">
-                <img src="../${product.product_image || 'uploads/placeholder.jpg'}" 
+                <img src="${product.product_image || '../../uploads/placeholder.jpg'}" 
                      alt="${product.product_title}"
-                     onerror="this.onerror=null; this.src='../uploads/placeholder.jpg';">
+                     onerror="this.onerror=null; this.src='../../uploads/placeholder.jpg';">
             </div>
             <div class="product-info">
                 <div class="product-category-tag">${product.cat_name || 'Uncategorized'}</div>

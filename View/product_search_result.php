@@ -57,7 +57,7 @@ $pagination = [
     'total_pages' => ceil($total / $limit)
 ];
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">

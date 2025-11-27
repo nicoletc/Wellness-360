@@ -4,7 +4,7 @@
  * Contains all data arrays for the shop page
  */
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../uploads/placeholder.jpg';
 
 // Categories for filtering
 $categories = [

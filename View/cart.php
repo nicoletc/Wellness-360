@@ -24,7 +24,7 @@ $cart_items = $cart_controller->get_user_cart_ctr();
 $cart_total = $cart_controller->get_cart_total_ctr();
 $cart_item_count = $cart_controller->get_cart_item_count_ctr();
 
-$placeholderImage = 'uploads/placeholder.jpg';
+$placeholderImage = '../../uploads/placeholder.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="en">

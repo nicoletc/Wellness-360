@@ -5,8 +5,8 @@
  */
 
 // Define image paths
-$heroImage = 'uploads/index.png';
-$placeholderImage = 'uploads/placeholder.jpg';
+$heroImage = '../uploads/index.png';
+$placeholderImage = '../uploads/placeholder.jpg';
 
 // Features data array
 $features = [
