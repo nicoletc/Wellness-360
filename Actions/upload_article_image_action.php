@@ -119,6 +119,16 @@ try {
         exit;
     }
     
+    // First, verify the article exists
+    $checkSql = "SELECT article_id FROM articles WHERE article_id = $articleIdEscaped";
+    $checkResult = $db->db_fetch_one($checkSql);
+    if (!$checkResult) {
+        http_response_code(404);
+        error_log("Article image upload: Article ID $articleIdEscaped does not exist");
+        echo json_encode(['status'=>'error','message'=>'Article not found.']);
+        exit;
+    }
+    
     $sql = "UPDATE articles SET article_image = '$relativeEscaped' WHERE article_id = $articleIdEscaped";
     
     // Log the SQL for debugging
@@ -129,10 +139,38 @@ try {
     $result = $db->db_query($sql);
     
     if ($result) {
+        // Check if any rows were actually affected
+        $affectedRows = mysqli_affected_rows($db->db);
+        error_log("Article image update affected rows: " . $affectedRows);
+        
+        if ($affectedRows === 0) {
+            // No rows were updated - this could mean the column doesn't exist or article_id is wrong
+            http_response_code(500);
+            error_log("Article image update: No rows affected. Column may not exist or article_id mismatch.");
+            
+            // Check if column exists
+            $columnCheck = "SHOW COLUMNS FROM articles LIKE 'article_image'";
+            $columnResult = $db->db_fetch_one($columnCheck);
+            if (!$columnResult) {
+                error_log("Article image column does not exist in articles table!");
+                echo json_encode(['status'=>'error','message'=>'Database column article_image does not exist. Please run the migration SQL.']);
+            } else {
+                echo json_encode(['status'=>'error','message'=>'Update succeeded but no rows were affected. Article may not exist.']);
+            }
+            exit;
+        }
+        
         // Verify the update worked
         $verifySql = "SELECT article_image FROM articles WHERE article_id = $articleIdEscaped";
         $verifyResult = $db->db_fetch_one($verifySql);
         error_log("Article image after update: " . ($verifyResult['article_image'] ?? 'NULL'));
+        
+        if (empty($verifyResult['article_image'])) {
+            http_response_code(500);
+            error_log("Article image update: Verification failed - column is still NULL");
+            echo json_encode(['status'=>'error','message'=>'Image uploaded but database update failed.']);
+            exit;
+        }
         
         echo json_encode(['status'=>'success','path'=>$relative,'image_path'=>$relative,'article_id'=>$articleId]);
     } else {
