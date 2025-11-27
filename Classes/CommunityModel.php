@@ -174,20 +174,9 @@ class CommunityModel extends db_connection {
                 }
             }
             
-            // Get image path - ensure it's relative to the View folder
-            $image = '../../uploads/placeholder.jpg';
-            if (!empty($workshop['workshop_image'])) {
-                // If image path doesn't start with ../uploads/, add it
-                if (strpos($workshop['workshop_image'], '../uploads/') === 0 || strpos($workshop['workshop_image'], '../../uploads/') === 0) {
-                    // Already has correct prefix
-                    $image = $workshop['workshop_image'];
-                } else if (strpos($workshop['workshop_image'], 'uploads/') === 0) {
-                    // Has old uploads/ prefix, convert to ../../uploads/
-                    $image = '../../uploads/' . substr($workshop['workshop_image'], 8);
-                } else {
-                    $image = '../../uploads/' . ltrim($workshop['workshop_image'], '/');
-                }
-            }
+            // Get image path - use the path from database directly (same as products)
+            // The get_image_path() function in View files will handle path normalization
+            $image = !empty($workshop['workshop_image']) ? $workshop['workshop_image'] : '../../uploads/placeholder.jpg';
             
             $formatted[] = [
                 'id' => $workshop['workshop_id'],

@@ -139,9 +139,9 @@ $placeholderImage = $data['placeholderImage'] ?? '../../uploads/placeholder.jpg'
                     <?php foreach ($articles as $article): ?>
                         <a href="single_article.php?id=<?php echo $article['id']; ?>" class="article-card">
                             <div class="article-image-wrapper">
-                                <img src="../<?php echo htmlspecialchars($article['image']); ?>" 
+                                <img src="<?php echo htmlspecialchars(get_image_path($article['image'] ?? $placeholderImage)); ?>" 
                                      alt="<?php echo htmlspecialchars($article['title']); ?>"
-                                     onerror="this.onerror=null; this.src='../<?php echo $placeholderImage; ?>';">
+                                     onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_image_path($placeholderImage)); ?>';">
                                 <div class="article-category-badge"><?php echo htmlspecialchars($article['category']); ?></div>
                                 <?php if ($article['has_pdf']): ?>
                                     <div class="article-video-badge">

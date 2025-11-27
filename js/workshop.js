@@ -417,6 +417,24 @@ async function viewWorkshop(workshopId) {
                 
                 document.getElementById('view_max_participants').textContent = workshop.max_participants;
                 document.getElementById('view_customer_name').textContent = workshop.customer_name || 'N/A';
+                
+                // Set workshop image
+                const imagePreview = document.getElementById('view_workshop_image');
+                if (imagePreview && workshop.workshop_image) {
+                    // Database stores paths as ../../uploads/... which is correct for Admin/ folder
+                    let imageSrc = workshop.workshop_image;
+                    if (!imageSrc.startsWith('../../') && !imageSrc.startsWith('../')) {
+                        if (imageSrc.startsWith('uploads/')) {
+                            imageSrc = '../../' + imageSrc;
+                        } else {
+                            imageSrc = '../../uploads/' + imageSrc;
+                        }
+                    }
+                    imagePreview.src = imageSrc;
+                    imagePreview.style.display = 'block';
+                } else if (imagePreview) {
+                    imagePreview.style.display = 'none';
+                }
 
                 document.getElementById('viewWorkshopModal').style.display = 'block';
             }

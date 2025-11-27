@@ -336,7 +336,7 @@ if (!empty($discussions)) {
                         <?php foreach ($workshops as $workshop): ?>
                         <div class="workshop-card">
                             <div class="workshop-image-wrapper">
-                                <img src="../<?php echo htmlspecialchars($workshop['image'] ?? $placeholderImage); ?>" 
+                                <img src="<?php echo htmlspecialchars(get_image_path($workshop['image'] ?? $placeholderImage)); ?>" 
                                      alt="<?php echo htmlspecialchars($workshop['title'] ?? ''); ?>"
                                      onerror="this.onerror=null; this.style.display='none';">
                                 <div class="workshop-type-badge <?php echo htmlspecialchars($workshop['type'] ?? 'virtual'); ?>">

@@ -166,7 +166,21 @@ function displayProducts(products) {
     tbody.innerHTML = products.map(product => {
         // Check if product_image exists and is not empty
         const hasImage = product.product_image && product.product_image.trim() !== '';
-        const imageSrc = hasImage ? `../${escapeHtml(product.product_image)}` : '';
+        // Database stores paths as ../../uploads/... which is correct for Admin/ folder
+        // Don't prepend ../ since the path already includes the correct relative path
+        let imageSrc = '';
+        if (hasImage) {
+            // If path already starts with ../../ or ../, use as-is
+            if (product.product_image.startsWith('../../') || product.product_image.startsWith('../')) {
+                imageSrc = escapeHtml(product.product_image);
+            } else if (product.product_image.startsWith('uploads/')) {
+                // If it starts with uploads/, add ../../
+                imageSrc = '../../' + escapeHtml(product.product_image);
+            } else {
+                // Default: assume it needs ../../uploads/ prefix
+                imageSrc = '../../uploads/' + escapeHtml(product.product_image);
+            }
+        }
         
         return `
         <tr>
@@ -516,7 +530,16 @@ async function openEditModal(productId) {
                 // Set image preview
                 const preview = document.getElementById('update_image_preview');
                 if (preview && product.product_image) {
-                    preview.src = '../' + product.product_image;
+                    // Database stores paths as ../../uploads/... which is correct for Admin/ folder
+                    let imageSrc = product.product_image;
+                    if (!imageSrc.startsWith('../../') && !imageSrc.startsWith('../')) {
+                        if (imageSrc.startsWith('uploads/')) {
+                            imageSrc = '../../' + imageSrc;
+                        } else {
+                            imageSrc = '../../uploads/' + imageSrc;
+                        }
+                    }
+                    preview.src = imageSrc;
                     preview.style.display = 'block';
                 } else if (preview) {
                     preview.style.display = 'none';
@@ -591,7 +614,16 @@ function openViewModal(product) {
     
     const imagePreview = document.getElementById('view_product_image');
     if (imagePreview && product.product_image) {
-        imagePreview.src = '../' + product.product_image;
+        // Database stores paths as ../../uploads/... which is correct for Admin/ folder
+        let imageSrc = product.product_image;
+        if (!imageSrc.startsWith('../../') && !imageSrc.startsWith('../')) {
+            if (imageSrc.startsWith('uploads/')) {
+                imageSrc = '../../' + imageSrc;
+            } else {
+                imageSrc = '../../uploads/' + imageSrc;
+            }
+        }
+        imagePreview.src = imageSrc;
         imagePreview.style.display = 'block';
     } else if (imagePreview) {
         imagePreview.style.display = 'none';

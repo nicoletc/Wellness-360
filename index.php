@@ -126,7 +126,7 @@ require_once 'Functions/get_cart_count.php';
                 <div class="hero-image-wrapper">
                     <div class="hero-image-container">
                         <?php // PHP: Output hero image from uploads folder ?>
-                        <img src="<?php echo htmlspecialchars($heroImage); ?>" 
+                        <img src="<?php echo htmlspecialchars(get_root_image_path($heroImage)); ?>" 
                              alt="Wellness meditation" 
                              class="hero-image"
                              onerror="this.onerror=null; this.style.display='none';">
@@ -223,9 +223,9 @@ require_once 'Functions/get_cart_count.php';
                         <div class="tip-card">
                             <div class="tip-image-wrapper">
                                 <a href="View/single_article.php?id=<?php echo $tip['article_id']; ?>">
-                                    <img src="<?php echo htmlspecialchars($tip['image']); ?>" 
+                                    <img src="<?php echo htmlspecialchars(get_root_image_path($tip['image'])); ?>" 
                                          alt="<?php echo htmlspecialchars($tip['title']); ?>"
-                                         onerror="this.onerror=null; this.src='<?php echo $placeholderImage; ?>';">
+                                         onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_root_image_path($placeholderImage)); ?>';">
                                 </a>
                                 <div class="tip-badge"><?php echo htmlspecialchars($tip['category']); ?></div>
                             </div>
@@ -270,9 +270,9 @@ require_once 'Functions/get_cart_count.php';
                         <div class="product-card">
                             <div class="product-image-wrapper">
                                 <a href="View/single_product.php?id=<?php echo $product['product_id']; ?>">
-                                    <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                    <img src="<?php echo htmlspecialchars(get_root_image_path($product['image'] ?: $placeholderImage)); ?>" 
                                          alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                         onerror="this.onerror=null; this.src='<?php echo $placeholderImage; ?>';">
+                                         onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_root_image_path($placeholderImage)); ?>';">
                                 </a>
                                 <?php if ($product['verified']): ?>
                                     <div class="product-verified-badge">

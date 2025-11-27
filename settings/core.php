@@ -125,6 +125,28 @@ function get_image_path(string $image_path): string {
     return '../' . $image_path;
 }
 
+/* Image path helper for root-level pages (like index.php) */
+function get_root_image_path(string $image_path): string {
+    // If path starts with ../../uploads/, convert to ../uploads/ (for root level)
+    if (str_starts_with($image_path, '../../uploads/')) {
+        return '../' . substr($image_path, 6); // Remove ../../ and add ../
+    }
+    // If path already starts with ../uploads/, use as-is (correct for root)
+    if (str_starts_with($image_path, '../uploads/')) {
+        return $image_path;
+    }
+    // If path starts with /, it's absolute - use as-is
+    if (str_starts_with($image_path, '/')) {
+        return $image_path;
+    }
+    // If path starts with uploads/, add ../ to make it relative to root
+    if (str_starts_with($image_path, 'uploads/')) {
+        return '../' . $image_path;
+    }
+    // Default: assume it needs ../uploads/ prefix
+    return '../uploads/' . ltrim($image_path, '/');
+}
+
 function get_new_message_count(): int {
     static $count = null;
     
