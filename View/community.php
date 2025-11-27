@@ -66,6 +66,19 @@ if (!empty($discussions)) {
         <div class="user-greeting-banner">
             <div class="container">
                 <div class="greeting-content">
+                    <div class="greeting-avatar">
+                        <img src="<?php echo htmlspecialchars(get_image_path(current_user_image())); ?>" 
+                             alt="<?php 
+                                $userName = function_exists('current_user_name') ? (string) current_user_name() : '';
+                                $firstName = 'User';
+                                if ($userName !== '') {
+                                  $parts = preg_split('/\s+/', trim($userName));
+                                  if (!empty($parts)) $firstName = $parts[0];
+                                }
+                                echo htmlspecialchars($firstName);
+                             ?>"
+                             onerror="this.onerror=null; this.src='../../uploads/placeholder_avatar.jpg';">
+                    </div>
                     <span class="greeting-text">
                         <?php
                         // Safely obtain current user name (guard if function missing)

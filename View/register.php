@@ -22,6 +22,9 @@
                     <div class="form-header">
                         <h2 class="form-title blur-words">Hello there.</h2>
                         <p class="form-subtitle reveal">Create an account to get started.</p>
+                        <p class="form-note reveal" style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                            <i class="fas fa-info-circle"></i> Don't worry, you can upload your profile picture later in your profile settings.
+                        </p>
                     </div>
                     
                     <div class="login-link-top">

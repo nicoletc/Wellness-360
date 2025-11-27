@@ -37,6 +37,11 @@ $quickActions = $data['quickActions'] ?? [];
         <div class="user-greeting-banner">
             <div class="container">
                 <div class="greeting-content">
+                    <div class="greeting-avatar">
+                        <img src="<?php echo htmlspecialchars(get_image_path(current_user_image())); ?>" 
+                             alt="<?php echo htmlspecialchars(explode(' ', current_user_name())[0]); ?>"
+                             onerror="this.onerror=null; this.src='../../uploads/placeholder_avatar.jpg';">
+                    </div>
                     <span class="greeting-text">
                         Hello <?php echo htmlspecialchars(explode(' ', current_user_name())[0]); ?>, get right back in!
                     </span>

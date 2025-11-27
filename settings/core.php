@@ -174,6 +174,32 @@ function current_user_email(): string {
     return $_SESSION[SESS_USER_EMAIL] ?? '';
 }
 
+function current_user_image(): string {
+    // Get from session first (updated after upload)
+    if (isset($_SESSION['customer_image'])) {
+        return $_SESSION['customer_image'];
+    }
+    // Fallback to database if not in session
+    if (is_logged_in()) {
+        try {
+            require_once __DIR__ . '/db_class.php';
+            $db = new db_connection();
+            if ($db->db_connect()) {
+                $customer_id = current_user_id();
+                $sql = "SELECT customer_image FROM customers WHERE customer_id = " . (int)$customer_id;
+                $result = $db->db_fetch_one($sql);
+                if ($result && !empty($result['customer_image'])) {
+                    $_SESSION['customer_image'] = $result['customer_image'];
+                    return $result['customer_image'];
+                }
+            }
+        } catch (Exception $e) {
+            // Silently fail and return placeholder
+        }
+    }
+    return '../../uploads/placeholder_avatar.jpg';
+}
+
 function current_user_role(): int {
     return isset($_SESSION[SESS_USER_ROLE]) ? (int)$_SESSION[SESS_USER_ROLE] : ROLE_CUSTOMER;
 }
